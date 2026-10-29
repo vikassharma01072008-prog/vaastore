@@ -1,763 +1,1238 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>VAA Store — Beyond the Cosmos</title>
-  
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
-  
-  <!-- Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <style>
-    /* ═══════════════════════════════════════════════
-       RESET & VARIABLES
-    ═══════════════════════════════════════════════ */
-    :root {
-      --primary: #6c5ce7;
-      --accent: #ff6b1a;
-      --bg-dark: #020205;
-      --glass: rgba(15, 15, 25, 0.7);
-      --border-glass: rgba(108, 92, 231, 0.3);
-      --text-main: #ffffff;
-      --text-muted: #a0a0b0;
-      --font-display: 'Orbitron', sans-serif;
-      --font-body: 'Space Grotesk', sans-serif;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body, html { 
-      width: 100%; height: 100%; overflow: hidden; 
-      background: var(--bg-dark); color: var(--text-main); 
-      font-family: var(--font-body); 
-      -webkit-font-smoothing: antialiased;
-    }
-    #app { width: 100vw; height: 100vh; position: relative; overflow: hidden; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VAA STORE — The Cosmic Bazaar</title>
     
-    /* ═══════════════════════════════════════════════
-       THREE.JS BACKGROUND & GLOBAL EFFECTS
-    ═══════════════════════════════════════════════ */
-    #canvas-container { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
     
-    .vignette {
-      position: absolute; inset: 0; pointer-events: none; z-index: 50;
-      box-shadow: inset 0 0 150px rgba(0,0,0,0.9);
-    }
-
-    /* ═══════════════════════════════════════════════
-       SCENE MANAGER
-    ═══════════════════════════════════════════════ */
-    .scene { 
-      position: absolute; inset: 0; z-index: 2; 
-      display: flex; align-items: center; justify-content: center; 
-      opacity: 0; pointer-events: none; 
-      transition: opacity 0.8s ease;
-    }
-    .scene.active { opacity: 1; pointer-events: auto; }
+    <!-- Three.js for 3D Space & Particles -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
-    /* ═══════════════════════════════════════════════
-       SCENE 1: GATE
-    ═══════════════════════════════════════════════ */
-    #scene-gate { background: #000; perspective: 2000px; }
-    .gate-wrapper { 
-      position: relative; width: 100%; height: 100%; 
-      display: flex; align-items: center; justify-content: center; 
-      transform-style: preserve-3d; 
-    }
+    <!-- GSAP for Animations & ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     
-    .gate-half { 
-      position: absolute; width: 50vw; height: 100vh; 
-      background-size: cover; background-position: center; background-repeat: no-repeat; 
-      z-index: 5; 
-    }
-    #gateleft { left: 0; background-image: url('assets/gateleft.jpeg'); box-shadow: inset -50px 0 100px rgba(0,0,0,0.8); }
-    #gateright { right: 0; background-image: url('assets/gateright.jpeg'); box-shadow: inset 50px 0 100px rgba(0,0,0,0.8); }
+    <!-- Supabase for Database -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
-    #portal { 
-      position: absolute; width: 100vw; height: 100vh; 
-      background-image: url('assets/portal.jpeg');
-      background-size: contain; background-position: center; background-repeat: no-repeat;
-      opacity: 0; z-index: 1; transform: scale(0.6);
-      filter: drop-shadow(0 0 50px var(--accent));
-    }
-    
-    .welcome-ui { position: absolute; text-align: center; z-index: 10; top: 50%; transform: translateY(-50%); width: 100%; }
-    .welcome-ui h1 { 
-      font-family: var(--font-display); 
-      font-size: clamp(3rem, 8vw, 6rem); 
-      font-weight: 900; letter-spacing: 10px;
-      background: linear-gradient(to bottom, #fff, var(--primary));
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 50px rgba(108, 92, 231, 0.5); 
-      margin-bottom: 10px;
-    }
-    .welcome-ui p { 
-      color: var(--accent); font-size: 1.2rem; 
-      margin-bottom: 50px; letter-spacing: 8px; text-transform: uppercase; font-weight: 600;
-    }
-    .btn-open {
-      padding: 20px 60px; font-size: 1.2rem; font-weight: 700; color: #fff;
-      background: rgba(108, 92, 231, 0.2); border: 2px solid var(--primary);
-      border-radius: 4px; cursor: pointer; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      backdrop-filter: blur(15px); box-shadow: 0 0 30px rgba(108, 92, 231, 0.4);
-      font-family: var(--font-display); letter-spacing: 3px;
-      position: relative; overflow: hidden;
-    }
-    .btn-open:hover { 
-      background: var(--primary); transform: scale(1.05); 
-      box-shadow: 0 0 80px rgba(108, 92, 231, 0.8); 
-    }
-    .btn-open::before {
-      content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-      transition: left 0.5s;
-    }
-    .btn-open:hover::before { left: 100%; }
+    <style>
+        /* ═══════════════════════════════════════════════
+           GLOBAL VARIABLES & RESET
+        ═══════════════════════════════════════════════ */
+        :root {
+            --primary: #6c5ce7;
+            --accent: #ff6b1a;
+            --bg-dark: #020205;
+            --glass: rgba(15, 15, 25, 0.75);
+            --border-glass: rgba(108, 92, 231, 0.4);
+            --font-display: 'Orbitron', sans-serif;
+            --font-body: 'Space Grotesk', sans-serif;
+        }
 
-    /* ═══════════════════════════════════════════════
-       SCENE 2: RED CARPET
-    ═══════════════════════════════════════════════ */
-    #scene-carpet { 
-      background: url('assets/carpet.jpeg') center/cover no-repeat; 
-      perspective: 1000px; 
-      background-color: #000;
-    }
-    
-    .char-sprite { 
-      position: absolute; bottom: 0; height: 55vh; opacity: 0; 
-      filter: blur(4px); mix-blend-mode: screen; 
-      transform-origin: bottom center; z-index: 3; 
-    }
-    #char-doc { left: 10%; }
-    #char-pol { left: 30%; height: 50vh; }
-    #char-biz { right: 30%; height: 52vh; }
-    #char-shop1 { right: 10%; height: 45vh; }
-    #char-shop2 { right: 2%; height: 38vh; filter: blur(6px); }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none; /* Hide default cursor for custom one */
+        }
 
-    #lady-container { 
-      position: absolute; bottom: 0; left: 50%; 
-      transform: translateX(-50%) translateY(100%); 
-      height: 85vh; z-index: 10; 
-    }
-    #lady-sprite { 
-      width: 100%; height: 100%; object-fit: contain; object-position: bottom; 
-      filter: drop-shadow(0 0 40px rgba(108,92,231,0.6)); 
-    }
-    
-    #speech-bubble {
-      position: absolute; top: 25%; right: 15%; transform: scale(0); transform-origin: bottom left;
-      background: var(--glass); border: 1px solid var(--border-glass); 
-      backdrop-filter: blur(20px); border-radius: 20px; padding: 30px 40px; 
-      z-index: 20; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-      max-width: 400px;
-    }
-    #speech-bubble h3 { font-family: var(--font-display); color: var(--accent); font-size: 0.9rem; margin-bottom: 10px; letter-spacing: 2px; }
-    #speech-bubble p { font-size: 1.3rem; line-height: 1.5; font-weight: 300; }
-    #speech-bubble::after {
-      content: ''; position: absolute; bottom: -15px; left: 40px;
-      border-width: 15px 15px 0; border-style: solid; 
-      border-color: var(--border-glass) transparent transparent transparent;
-    }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: var(--font-body);
+            -webkit-font-smoothing: antialiased;
+        }
 
-    #search-ui {
-      position: absolute; bottom: 8%; left: 50%; 
-      transform: translateX(-50%) translateY(50px);
-      width: 90%; max-width: 700px; opacity: 0; z-index: 30; 
-      display: flex; gap: 15px;
-      background: var(--glass); padding: 15px; border-radius: 60px;
-      border: 1px solid var(--border-glass); backdrop-filter: blur(20px);
-      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-    }
-    #search-input {
-      flex: 1; padding: 15px 30px; border-radius: 50px; border: none;
-      background: rgba(0,0,0,0.5); color: #fff; font-size: 1.1rem; 
-      outline: none; font-family: var(--font-body);
-    }
-    #search-input::placeholder { color: rgba(255,255,255,0.4); }
-    #search-btn {
-      padding: 0 40px; border-radius: 50px; background: var(--accent); border: none;
-      color: #fff; font-weight: bold; cursor: pointer; transition: 0.3s; 
-      font-size: 1.1rem; font-family: var(--font-display); letter-spacing: 1px;
-    }
-    #search-btn:hover { background: #ff8c4a; box-shadow: 0 0 30px var(--accent); transform: scale(1.05); }
+        #app {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
 
-    /* ═══════════════════════════════════════════════
-       SCENE 3: WARP
-    ═══════════════════════════════════════════════ */
-    #scene-warp { background: #000; z-index: 50; overflow: hidden; }
-    #warp-bg { 
-      position: absolute; inset: 0; 
-      background: url('assets/window.jpg') center/cover no-repeat; 
-      transform: scale(1); opacity: 0;
-    }
-    #warp-speed-lines {
-      position: absolute; inset: 0; 
-      background: repeating-linear-gradient(90deg, transparent, transparent 10px, rgba(255,255,255,0.1) 10px, rgba(255,255,255,0.1) 11px);
-      opacity: 0;
-    }
+        /* ═══════════════════════════════════════════════
+           CUSTOM CURSOR
+        ═══════════════════════════════════════════════ */
+        #cursor-dot {
+            position: fixed;
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99999;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px var(--accent);
+        }
 
-    /* ═══════════════════════════════════════════════
-       SCENE 4: PLANET STORE (THE SHOP)
-    ═══════════════════════════════════════════════ */
-    #scene-store { 
-      background: url('assets/ice.jpeg') center/cover no-repeat; 
-      background-attachment: fixed;
-      display: block; 
-      overflow-y: auto; 
-      padding-top: 100px;
-      padding-bottom: 100px;
-    }
-    #scene-store::before {
-      content: ''; position: fixed; inset: 0; 
-      background: rgba(2, 2, 5, 0.85); backdrop-filter: blur(10px); 
-      z-index: 1; pointer-events: none;
-    }
+        #cursor-ring {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border: 1px solid var(--primary);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 99998;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s, border-color 0.3s;
+        }
 
-    /* Store Navbar */
-    .store-nav {
-      position: fixed; top: 0; left: 0; width: 100%; padding: 20px 50px;
-      display: flex; justify-content: space-between; align-items: center;
-      background: rgba(5, 5, 10, 0.8); backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(108, 92, 231, 0.2); z-index: 100;
-    }
-    .store-nav h1 { font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 5px; color: #fff; }
-    .store-nav h1 span { color: var(--accent); }
-    .cart-icon { position: relative; cursor: pointer; }
-    .cart-icon svg { width: 30px; height: 30px; fill: #fff; transition: fill 0.3s; }
-    .cart-icon:hover svg { fill: var(--accent); }
-    .cart-count { 
-      position: absolute; top: -8px; right: -8px; background: var(--accent); 
-      color: #fff; font-size: 0.7rem; font-weight: bold; 
-      width: 20px; height: 20px; border-radius: 50%; 
-      display: flex; align-items: center; justify-content: center;
-    }
+        /* ═══════════════════════════════════════════════
+           THREE.JS BACKGROUND & VIGNETTE
+        ═══════════════════════════════════════════════ */
+        #canvas-container {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+        }
 
-    /* Store Content */
-    .store-content { position: relative; z-index: 10; max-width: 1400px; margin: 0 auto; padding: 0 40px; }
-    
-    .store-header { text-align: center; margin-bottom: 60px; }
-    .store-header h2 { 
-      font-family: var(--font-display); font-size: 3rem; letter-spacing: 4px; 
-      color: #fff; text-shadow: 0 0 30px var(--primary); margin-bottom: 10px;
-    }
-    .store-header p { color: var(--text-muted); font-size: 1.1rem; letter-spacing: 2px; }
+        .vignette {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 50;
+            box-shadow: inset 0 0 250px rgba(0, 0, 0, 0.95);
+        }
 
-    /* Product Grid */
-    .product-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
-      gap: 40px; padding-bottom: 100px;
-    }
+        /* ═══════════════════════════════════════════════
+           SCENE MANAGER BASE
+        ═══════════════════════════════════════════════ */
+        .scene {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease;
+        }
 
-    .product-card {
-      background: var(--glass); border: 1px solid var(--border-glass); 
-      border-radius: 20px; overflow: hidden; position: relative;
-      transition: all 0.4s ease; display: flex; flex-direction: column;
-      backdrop-filter: blur(10px);
-    }
-    .product-card:hover { 
-      transform: translateY(-10px); border-color: var(--accent); 
-      box-shadow: 0 20px 50px rgba(255, 107, 26, 0.2); 
-    }
+        .scene.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
-    .product-img-wrap { 
-      width: 100%; height: 350px; overflow: hidden; 
-      background: radial-gradient(circle, rgba(108,92,231,0.1) 0%, transparent 70%);
-      display: flex; align-items: center; justify-content: center; padding: 20px;
-    }
-    .product-img-wrap img { 
-      max-width: 100%; max-height: 100%; object-fit: contain; 
-      transition: transform 0.5s ease; 
-      filter: drop-shadow(0 15px 25px rgba(0,0,0,0.8));
-    }
-    .product-card:hover .product-img-wrap img { transform: scale(1.1) translateY(-10px); }
+        /* ═══════════════════════════════════════════════
+           SCENE 0: LOADER (SVG RING + LOGO)
+        ═══════════════════════════════════════════════ */
+        #scene-loader {
+            background-color: #000000;
+            z-index: 10000;
+            flex-direction: column;
+        }
 
-    .product-info { padding: 25px; border-top: 1px solid rgba(255,255,255,0.05); }
-    .product-cat { font-size: 0.8rem; color: var(--primary); letter-spacing: 2px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
-    .product-name { font-family: var(--font-display); font-size: 1.3rem; color: #fff; margin-bottom: 10px; }
-    .product-price { font-size: 1.5rem; color: var(--accent); font-weight: bold; margin-bottom: 15px; }
-    
-    .size-options { display: flex; gap: 10px; margin-bottom: 20px; }
-    .size-box { 
-      width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;
-      border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; 
-      font-size: 0.9rem; cursor: pointer; transition: 0.2s;
-    }
-    .size-box:hover, .size-box.selected { border-color: var(--accent); background: rgba(255, 107, 26, 0.1); color: var(--accent); font-weight: bold; }
+        .loader-logo {
+            width: 180px;
+            margin-bottom: 40px;
+            filter: drop-shadow(0 0 30px var(--primary));
+            animation: pulse-logo 2s infinite alternate;
+        }
 
-    .buy-btn { 
-      width: 100%; padding: 15px; border-radius: 12px; 
-      background: linear-gradient(135deg, var(--primary), #8c7ae6); 
-      border: none; color: white; font-weight: bold; font-family: var(--font-display);
-      letter-spacing: 1px; cursor: pointer; transition: 0.3s;
-    }
-    .buy-btn:hover { background: linear-gradient(135deg, #8c7ae6, var(--primary)); box-shadow: 0 0 20px var(--primary); }
+        @keyframes pulse-logo {
+            from { transform: scale(0.95); filter: drop-shadow(0 0 10px var(--primary)); }
+            to { transform: scale(1.05); filter: drop-shadow(0 0 50px var(--accent)); }
+        }
 
-    /* ═══════════════════════════════════════════════
-       OVERLAYS & UTILS
-    ═══════════════════════════════════════════════ */
-    #flash-overlay { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 9999; }
-    #loading-overlay { 
-      position: absolute; inset: 0; background: var(--bg-dark); 
-      display: flex; flex-direction: column; align-items: center; justify-content: center; 
-      z-index: 10000; transition: opacity 1s ease; 
-    }
-    .spinner { 
-      width: 80px; height: 80px; border: 2px solid rgba(108,92,231,0.1); 
-      border-top-color: var(--primary); border-radius: 50%; 
-      animation: spin 1s linear infinite; margin-bottom: 20px;
-    }
-    .loading-text { font-family: var(--font-display); color: var(--primary); letter-spacing: 5px; animation: pulse 1.5s infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .svg-loader-circle {
+            width: 250px;
+            height: 250px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
 
-    /* ═══════════════════════════════════════════════
-       RESPONSIVE MOBILE
-    ═══════════════════════════════════════════════ */
-    @media (max-width: 768px) {
-      .welcome-ui h1 { font-size: 3rem; }
-      #speech-bubble { top: 15%; right: 5%; width: 90%; max-width: none; }
-      #speech-bubble::after { left: 80%; }
-      #search-ui { flex-direction: column; border-radius: 20px; padding: 20px; width: 95%; }
-      #search-btn { padding: 15px; }
-      .store-nav { padding: 15px 20px; }
-      .store-nav h1 { font-size: 1.2rem; }
-      .store-content { padding: 0 15px; padding-top: 50px; }
-      .store-header h2 { font-size: 1.8rem; }
-      .product-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+        .svg-loader-circle circle {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 2;
+            stroke-dasharray: 785;
+            stroke-dashoffset: 785;
+            transform-origin: center;
+            transform: rotate(-90deg);
+        }
+
+        /* ═══════════════════════════════════════════════
+           SCENE 1: THE GATE
+        ═══════════════════════════════════════════════ */
+        #scene-gate {
+            background-color: #000000;
+            perspective: 2000px;
+        }
+
+        .gate-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform-style: preserve-3d;
+        }
+
+        .gate-half {
+            position: absolute;
+            width: 50vw;
+            height: 100vh;
+            background-size: cover;
+            background-position: center;
+            z-index: 5;
+        }
+
+        #gateleft {
+            left: 0;
+            background-image: url('assets/gateleft.jpeg');
+            box-shadow: inset -80px 0 150px rgba(0, 0, 0, 0.95);
+        }
+
+        #gateright {
+            right: 0;
+            background-image: url('assets/gateright.jpeg');
+            box-shadow: inset 80px 0 150px rgba(0, 0, 0, 0.95);
+        }
+
+        #portal {
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            background-image: url('assets/portal.jpeg');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            z-index: 1;
+            transform: scale(0.4);
+            filter: drop-shadow(0 0 80px var(--accent));
+        }
+
+        .welcome-ui {
+            position: absolute;
+            text-align: center;
+            z-index: 10;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .svg-title {
+            width: 90%;
+            max-width: 900px;
+            overflow: visible;
+        }
+
+        .svg-title text {
+            font-family: var(--font-display);
+            font-size: 9rem;
+            font-weight: 900;
+            fill: transparent;
+            stroke: #ffffff;
+            stroke-width: 2;
+            letter-spacing: 15px;
+        }
+
+        .welcome-ui p {
+            color: var(--accent);
+            font-size: 1.2rem;
+            margin: 20px 0 50px 0;
+            letter-spacing: 12px;
+            text-transform: uppercase;
+            font-weight: 600;
+            opacity: 0;
+        }
+
+        .btn-open {
+            padding: 20px 60px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            background-color: rgba(108, 92, 231, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 30px rgba(108, 92, 231, 0.2);
+            font-family: var(--font-display);
+            letter-spacing: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-open::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-open:hover::before {
+            left: 100%;
+        }
+
+        .btn-open:hover {
+            background-color: var(--primary);
+            box-shadow: 0 0 60px rgba(108, 92, 231, 0.8);
+        }
+
+        /* ═══════════════════════════════════════════════
+           SCENE 2: THE RED CARPET
+        ═══════════════════════════════════════════════ */
+        #scene-carpet {
+            background-image: url('assets/carpet.jpeg');
+            background-size: cover;
+            background-position: center;
+            perspective: 1000px;
+            background-color: #000000;
+        }
+
+        .bg-shop {
+            position: absolute;
+            bottom: 25%;
+            width: 30vw;
+            height: 40vh;
+            background-size: cover;
+            border-radius: 20px;
+            opacity: 0;
+            filter: blur(10px);
+            border: 1px solid rgba(108, 92, 231, 0.2);
+        }
+
+        #shop-left {
+            left: -5%;
+            background-image: url('assets/card1.jpg');
+            transform: rotateY(20deg);
+        }
+
+        #shop-right {
+            right: -5%;
+            background-image: url('assets/card2.jpg');
+            transform: rotateY(-20deg);
+        }
+
+        .char-sprite {
+            position: absolute;
+            bottom: 0;
+            height: 50vh;
+            opacity: 0;
+            filter: blur(5px);
+            mix-blend-mode: screen;
+            z-index: 3;
+        }
+
+        #char-doc { left: 10%; bottom: 10%; }
+        #char-pol { left: 25%; bottom: 0; height: 45vh; }
+        #char-biz { right: 25%; bottom: 10%; height: 48vh; }
+        #char-shop1 { right: 10%; bottom: 0; height: 42vh; }
+
+        #lady-container {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(100%) scale(2);
+            height: 85vh;
+            z-index: 10;
+            transform-origin: bottom center;
+        }
+
+        #lady-sprite {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 40px rgba(108, 92, 231, 0.6));
+        }
+
+        #ship-container {
+            position: absolute;
+            top: -120%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90vw;
+            max-width: 800px;
+            z-index: 20;
+        }
+
+        #ship-sprite {
+            width: 100%;
+            filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.9));
+        }
+
+        #speech-bubble {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%) scale(0);
+            transform-origin: bottom center;
+            background-color: var(--glass);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px 40px;
+            z-index: 15;
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+        }
+
+        #speech-bubble h3 {
+            font-family: var(--font-display);
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        #speech-bubble p {
+            font-size: 1.4rem;
+            line-height: 1.5;
+            font-weight: 300;
+        }
+
+        #search-ui {
+            position: absolute;
+            bottom: 8%;
+            left: 50%;
+            transform: translateX(-50%) translateY(50px);
+            width: 90%;
+            max-width: 700px;
+            opacity: 0;
+            z-index: 30;
+            display: flex;
+            gap: 15px;
+            background-color: var(--glass);
+            padding: 12px;
+            border-radius: 60px;
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(20px);
+        }
+
+        #search-input {
+            flex: 1;
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: none;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: #ffffff;
+            font-size: 1.1rem;
+            outline: none;
+            font-family: var(--font-body);
+        }
+
+        #search-btn {
+            padding: 0 50px;
+            border-radius: 50px;
+            background-color: var(--accent);
+            border: none;
+            color: #ffffff;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: var(--font-display);
+            font-size: 1rem;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+
+        #search-btn:hover {
+            background-color: #ff8c4a;
+            box-shadow: 0 0 30px var(--accent);
+        }
+
+        /* ═══════════════════════════════════════════════
+           SCENE 3: WARP
+        ═══════════════════════════════════════════════ */
+        #scene-warp {
+            background-color: #000000;
+            z-index: 50;
+            overflow: hidden;
+        }
+
+        #warp-bg {
+            position: absolute;
+            inset: 0;
+            background-image: url('assets/window.jpg');
+            background-size: cover;
+            background-position: center;
+            transform: scale(1);
+            opacity: 0;
+        }
+
+        #warp-flash {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, #ffffff, transparent);
+            opacity: 0;
+            z-index: 60;
+        }
+
+        /* ═══════════════════════════════════════════════
+           SCENE 4: PLANET STORE (SCROLL JACKED)
+        ═══════════════════════════════════════════════ */
+        #scene-store {
+            background-image: url('assets/space.jpeg');
+            background-size: cover;
+            background-position: center;
+            display: block;
+            overflow-y: auto;
+            overflow-x: hidden;
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #scene-store.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #scene-store::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-color: rgba(2, 2, 5, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 1;
+        }
+
+        .store-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 25px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(5, 5, 10, 0.6);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(108, 92, 231, 0.2);
+            z-index: 100;
+        }
+
+        .store-nav h1 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            letter-spacing: 8px;
+            color: #ffffff;
+        }
+
+        .store-nav h1 span {
+            color: var(--accent);
+        }
+
+        .scroll-hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .planet-float {
+            position: absolute;
+            width: 40vw;
+            max-width: 600px;
+            border-radius: 50%;
+            opacity: 0.5;
+            filter: blur(2px);
+        }
+
+        #planet-ice { top: 10%; left: -10%; }
+        #planet-rocky { bottom: -10%; right: -10%; }
+
+        .store-header {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+        }
+
+        .store-header h2 {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 6vw, 6rem);
+            letter-spacing: 10px;
+            text-shadow: 0 0 50px var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .store-header p {
+            color: var(--accent);
+            font-size: 1.2rem;
+            letter-spacing: 5px;
+        }
+
+        .store-content {
+            position: relative;
+            z-index: 10;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 100px 40px;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 40px;
+        }
+
+        .product-card {
+            background-color: var(--glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            overflow: hidden;
+            transition: 0.4s;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-15px);
+            border-color: var(--accent);
+            box-shadow: 0 30px 60px rgba(255, 107, 26, 0.2);
+        }
+
+        .product-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            opacity: 0;
+            transition: 0.4s;
+        }
+
+        .product-card:hover::before {
+            opacity: 1;
+        }
+
+        .product-img-wrap {
+            width: 100%;
+            height: 350px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: radial-gradient(circle, rgba(108, 92, 231, 0.15) 0%, transparent 70%);
+        }
+
+        .product-img-wrap img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.9));
+            transition: transform 0.5s;
+        }
+
+        .product-card:hover .product-img-wrap img {
+            transform: scale(1.1) translateY(-10px);
+        }
+
+        .product-info {
+            padding: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .product-name {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+
+        .product-price {
+            font-size: 1.6rem;
+            color: var(--accent);
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .buy-btn {
+            width: 100%;
+            padding: 18px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary), #8c7ae6);
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-family: var(--font-display);
+            cursor: pointer;
+            font-size: 1rem;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+
+        .buy-btn:hover {
+            background: linear-gradient(135deg, #8c7ae6, var(--primary));
+            box-shadow: 0 0 30px var(--primary);
+        }
+
+        /* ═══════════════════════════════════════════════
+           MOBILE RESPONSIVENESS
+        ═══════════════════════════════════════════════ */
+        @media (max-width: 768px) {
+            .svg-title text { font-size: 4rem; letter-spacing: 5px; }
+            #speech-bubble { top: 15%; }
+            .store-nav { padding: 15px 20px; }
+            .store-nav h1 { font-size: 1.2rem; }
+            .planet-float { width: 80vw; }
+            .product-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
-<!-- THREE.JS CANVAS -->
-<div id="canvas-container"></div>
+    <!-- Custom Cursor Elements -->
+    <div id="cursor-dot"></div>
+    <div id="cursor-ring"></div>
 
-<!-- VIGNETTE OVERLAY -->
-<div class="vignette"></div>
+    <!-- 3D Background Canvas -->
+    <div id="canvas-container"></div>
+    <div class="vignette"></div>
 
-<div id="app">
-  
-  <!-- SCENE 1: GATE -->
-  <div id="scene-gate" class="scene active">
-    <div class="gate-wrapper">
-      <div id="portal"></div>
-      <div id="gateleft" class="gate-half"></div>
-      <div id="gateright" class="gate-half"></div>
-      <div class="welcome-ui" id="welcome-ui">
-        <h1>VAA</h1>
-        <p>The Universe Awaits</p>
-        <button class="btn-open" onclick="openGate()">Initialize Portal</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SCENE 2: RED CARPET -->
-  <div id="scene-carpet" class="scene">
-    <!-- Characters -->
-    <img src="assets/doctor.png" class="char-sprite" id="char-doc" alt="Doctor">
-    <img src="assets/police.png" class="char-sprite" id="char-pol" alt="Police">
-    <img src="assets/buisnessman.png" class="char-sprite" id="char-biz" alt="Businessman">
-    <img src="assets/shopper1.png" class="char-sprite" id="char-shop1" alt="Shopper 1">
-    <img src="assets/shopper2.png" class="char-sprite" id="char-shop2" alt="Shopper 2">
-
-    <!-- Lady -->
-    <div id="lady-container">
-      <img src="assets/ladywalk1.png" id="lady-sprite" alt="VAA Guide">
-    </div>
-    
-    <!-- Speech Bubble -->
-    <div id="speech-bubble">
-      <h3>VAA STORE GUIDE</h3>
-      <p>Hi! Welcome to VAA Store.<br><br>What do you require today?</p>
-    </div>
-
-    <!-- Search UI -->
-    <div id="search-ui">
-      <input type="text" id="search-input" placeholder="Search the cosmos... (e.g. Hoodie, T-Shirt)" onkeypress="handleSearch(event)">
-      <button id="search-btn" onclick="triggerWarp()">Search</button>
-    </div>
-  </div>
-
-  <!-- SCENE 3: WARP -->
-  <div id="scene-warp" class="scene">
-    <div id="warp-bg"></div>
-    <div id="warp-speed-lines"></div>
-  </div>
-
-  <!-- SCENE 4: PLANET STORE -->
-  <div id="scene-store" class="scene">
-    
-    <!-- Store Navbar -->
-    <nav class="store-nav">
-      <h1>VAA <span>STORE</span></h1>
-      <div class="cart-icon">
-        <svg viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
-        <div class="cart-count">0</div>
-      </div>
-    </nav>
-
-    <!-- Store Content -->
-    <div class="store-content">
-      <div class="store-header">
-        <h2 id="store-title">COSMIC ARRIVALS</h2>
-        <p>Discover artifacts from across the galaxy</p>
-      </div>
-      
-      <div class="product-grid" id="product-grid">
-        <!-- Products injected by JS -->
-      </div>
-    </div>
-  </div>
-
-  <!-- OVERLAYS -->
-  <div id="flash-overlay"></div>
-  <div id="loading-overlay">
-    <div class="spinner"></div>
-    <div class="loading-text">CALIBRATING WARP DRIVE...</div>
-  </div>
-
-</div>
-
-<script>
-  // ═══════════════════════════════════════════════════════════════
-  // SUPABASE CONFIG
-  // ═══════════════════════════════════════════════════════════════
-  const SUPABASE_URL = 'https://gynphsibkcrivosuamxp.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5bnBoc2lia2NyaXZvc3VhbXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4OTA0NzQsImV4cCI6MjEwNTQ2NjQ3NH0.GNKrZgJFj4496-kPzfdc2Fzv3bS8YO6CLrWPV4PyucM';
-  const BUCKET = 'product-images';
-  const { createClient } = supabase;
-  const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  // ═══════════════════════════════════════════════════════════════
-  // THREE.JS 3D BACKGROUND (Particles + Wireframe Sphere)
-  // ═══════════════════════════════════════════════════════════════
-  let scene, camera, renderer, particles, sphere;
-  let mouseX = 0, mouseY = 0;
-  let targetX = 0, targetY = 0;
-
-  function initThreeJS() {
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 10;
-
-    renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-    // 1. 3D Wireframe Sphere (The "Cosmic Core")
-    const geometry = new THREE.IcosahedronGeometry(3, 1);
-    const material = new THREE.MeshBasicMaterial({ 
-      color: 0x6c5ce7, 
-      wireframe: true,
-      transparent: true,
-      opacity: 0.15
-    });
-    sphere = new THREE.Mesh(geometry, material);
-    scene.add(sphere);
-
-    // 2. 3D Particle Field (Stars)
-    const loader = new THREE.TextureLoader();
-    loader.crossOrigin = true;
-    loader.load('assets/dust.jpg', (texture) => {
-      const pGeometry = new THREE.BufferGeometry();
-      const vertices = [];
-      for (let i = 0; i < 5000; i++) {
-        const x = (Math.random() - 0.5) * 50;
-        const y = (Math.random() - 0.5) * 50;
-        const z = (Math.random() - 0.5) * 50;
-        vertices.push(x, y, z);
-      }
-      pGeometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-      
-      const pMaterial = new THREE.PointsMaterial({
-        size: 0.15,
-        map: texture,
-        transparent: true,
-        opacity: 0.8,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false
-      });
-      
-      particles = new THREE.Points(pGeometry, pMaterial);
-      scene.add(particles);
-    });
-
-    // Mouse events for parallax
-    document.addEventListener('mousemove', (e) => {
-      mouseX = (e.clientX - window.innerWidth / 2) * 0.001;
-      mouseY = (e.clientY - window.innerHeight / 2) * 0.001;
-    });
-
-    animate();
-  }
-
-  function animate() {
-    requestAnimationFrame(animate);
-    
-    // Smooth mouse interpolation
-    targetX = mouseX * 0.5;
-    targetY = mouseY * 0.5;
-    
-    if(sphere) {
-      sphere.rotation.y += 0.002;
-      sphere.rotation.x += 0.001;
-      // React to mouse
-      sphere.position.x += (targetX * 2 - sphere.position.x) * 0.05;
-      sphere.position.y += (-targetY * 2 - sphere.position.y) * 0.05;
-    }
-    
-    if(particles) {
-      particles.rotation.y += 0.0005;
-      particles.position.x += (targetX * 5 - particles.position.x) * 0.02;
-      particles.position.y += (-targetY * 5 - particles.position.y) * 0.02;
-    }
-    
-    renderer.render(scene, camera);
-  }
-
-  window.addEventListener('resize', () => {
-    if(camera && renderer) {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    }
-  });
-
-  // ═══════════════════════════════════════════════════════════════
-  // SCENE MANAGER
-  // ═══════════════════════════════════════════════════════════════
-  function goToScene(sceneId) {
-    document.querySelectorAll('.scene').forEach(el => el.classList.remove('active'));
-    document.getElementById(`scene-${sceneId}`).classList.add('active');
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // SCENE 1: GATE LOGIC
-  // ═══════════════════════════════════════════════════════════════
-  window.openGate = function() {
-    const tl = gsap.timeline();
-    
-    // 1. Fade UI
-    tl.to("#welcome-ui", { opacity: 0, duration: 0.8, y: -50, ease: "power2.in" });
-    
-    // 2. Open Doors
-    tl.to("#gateleft", { rotateY: -120, x: -150, duration: 3, ease: "power3.inOut" }, "-=0.4");
-    tl.to("#gateright", { rotateY: 120, x: 150, duration: 3, ease: "power3.inOut" }, "<");
-    
-    // 3. Portal Ignites
-    tl.to("#portal", { opacity: 1, scale: 4, duration: 2.5, ease: "power2.in" }, "-=2.5");
-    
-    // 4. Suck In (POV Push)
-    tl.to(".gate-wrapper", { scale: 8, filter: "blur(40px)", duration: 2, ease: "power4.in" }, "-=1.2");
-    
-    // 5. White Flash
-    tl.to("#flash-overlay", { opacity: 1, duration: 0.4 }, "-=0.8");
-    
-    // 6. Switch Scene & Reset
-    tl.call(() => {
-      goToScene('carpet');
-      gsap.set(".gate-wrapper", { scale: 1, filter: "none" });
-      gsap.set("#gateleft", { rotateY: 0, x: 0 });
-      gsap.set("#gateright", { rotateY: 0, x: 0 });
-      gsap.set("#portal", { opacity: 0, scale: 1 });
-      startCarpetSequence();
-    });
-    
-    // 7. Fade out flash
-    tl.to("#flash-overlay", { opacity: 0, duration: 2, delay: 0.5 });
-  };
-
-  // ═══════════════════════════════════════════════════════════════
-  // SCENE 2: CARPET SEQUENCE
-  // ═══════════════════════════════════════════════════════════════
-  function startCarpetSequence() {
-    const tl = gsap.timeline();
-
-    // 1. Heavy Camera Drop (Zoom out and pull up)
-    gsap.set("#scene-carpet", { backgroundPosition: "50% -30%", backgroundSize: "200%" });
-    tl.to("#scene-carpet", { backgroundPosition: "50% 50%", backgroundSize: "100%", duration: 4, ease: "power4.out" });
-
-    // 2. Characters Fade in & Float
-    tl.to(".char-sprite", { opacity: 1, y: -30, duration: 2.5, stagger: 0.3, ease: "power2.out" }, "-=2.5");
-    
-    gsap.to(".char-sprite", {
-      y: "+=30",
-      duration: 5,
-      yoyo: true,
-      repeat: -1,
-      ease: "sine.inOut",
-      delay: 3,
-      stagger: 0.4
-    });
-
-    // 3. Lady Walks In
-    gsap.set("#lady-container", { y: "100%", x: "-100vw" });
-    tl.to("#lady-container", { y: "0%", duration: 0.1 });
-    tl.to("#lady-container", { opacity: 1, duration: 0.1 });
-    
-    let walkFrame = 1;
-    const walkInterval = setInterval(() => {
-      walkFrame = walkFrame === 1 ? 2 : (walkFrame === 2 ? 3 : 1);
-      document.getElementById('lady-sprite').src = `assets/ladywalk${walkFrame}.png`;
-    }, 180); 
-
-    tl.to("#lady-container", { 
-      x: "0vw", 
-      duration: 4.5, 
-      ease: "power2.inOut",
-      onComplete: () => {
-        clearInterval(walkInterval);
-        document.getElementById('lady-sprite').src = `assets/ladysmile.png`;
+    <div id="app">
         
-        // Pop Speech Bubble
-        gsap.to("#speech-bubble", { scale: 1, duration: 1, ease: "elastic.out(1, 0.5)" });
+        <!-- ═══════════════════════════════════════════════
+             SCENE 0: LOADER
+        ═══════════════════════════════════════════════ -->
+        <div id="scene-loader" class="scene active">
+            <svg class="svg-loader-circle">
+                <circle cx="125" cy="125" r="120" id="loader-circle"></circle>
+            </svg>
+            <img src="assets/vaastorelogo.png" class="loader-logo" alt="VAA Store Logo">
+        </div>
+
+        <!-- ═══════════════════════════════════════════════
+             SCENE 1: THE GATE
+        ═══════════════════════════════════════════════ -->
+        <div id="scene-gate" class="scene">
+            <div class="gate-wrapper">
+                <div id="portal"></div>
+                <div id="gateleft" class="gate-half"></div>
+                <div id="gateright" class="gate-half"></div>
+                
+                <div class="welcome-ui" id="welcome-ui">
+                    <svg class="svg-title" viewBox="0 0 900 250">
+                        <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">VAA STORE</text>
+                    </svg>
+                    <p>Discover The Impossible</p>
+                    <button class="btn-open" onclick="openGate()">GET INSIDE</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════
+             SCENE 2: THE RED CARPET
+        ═══════════════════════════════════════════════ -->
+        <div id="scene-carpet" class="scene">
+            <!-- Background AI Shops -->
+            <div class="bg-shop" id="shop-left"></div>
+            <div class="bg-shop" id="shop-right"></div>
+
+            <!-- Floating Characters -->
+            <img src="assets/doctor.png" class="char-sprite" id="char-doc" alt="Doctor">
+            <img src="assets/police.png" class="char-sprite" id="char-pol" alt="Police">
+            <img src="assets/buisnessman.png" class="char-sprite" id="char-biz" alt="Businessman">
+            <img src="assets/shopper1.png" class="char-sprite" id="char-shop1" alt="Shopper">
+
+            <!-- Landing Spaceship -->
+            <div id="ship-container">
+                <img src="assets/spaceship.png" id="ship-sprite" alt="Spaceship">
+            </div>
+
+            <!-- The AI Lady -->
+            <div id="lady-container">
+                <img src="assets/ladywalk1.png" id="lady-sprite" alt="VAA Guide">
+            </div>
+            
+            <!-- Dialogue UI -->
+            <div id="speech-bubble">
+                <h3>VAA STORE GUIDE</h3>
+                <p id="speech-text">Welcome to VAA Store!</p>
+            </div>
+
+            <!-- Search Interface -->
+            <div id="search-ui">
+                <input type="text" id="search-input" placeholder="What product are you looking for?" onkeypress="handleSearch(event)">
+                <button id="search-btn" onclick="triggerWarp()">SEARCH</button>
+            </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════
+             SCENE 3: WARP SPEED
+        ═══════════════════════════════════════════════ -->
+        <div id="scene-warp" class="scene">
+            <div id="warp-bg"></div>
+            <div id="warp-flash"></div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════
+             SCENE 4: PLANET STORE (SCROLL JACKED)
+        ═══════════════════════════════════════════════ -->
+        <div id="scene-store" class="scene">
+            <nav class="store-nav">
+                <h1>VAA <span>STORE</span></h1>
+            </nav>
+
+            <!-- Scroll-Jacked Hero Section with Planets -->
+            <div class="scroll-hero">
+                <img src="assets/ice.jpeg" class="planet-float" id="planet-ice" alt="Ice Planet">
+                <img src="assets/rocky.jpeg" class="planet-float" id="planet-rocky" alt="Rocky Planet">
+                
+                <div class="store-header">
+                    <h2 id="store-title">SECTOR ARRIVAL</h2>
+                    <p>Scroll to explore the cosmos</p>
+                </div>
+            </div>
+
+            <!-- Product Grid Container -->
+            <div class="store-content">
+                <div class="product-grid" id="product-grid"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // SUPABASE & REGISTER GSAP PLUGINS
+        // ═══════════════════════════════════════════════════════════════
+        gsap.registerPlugin(ScrollTrigger);
         
-        // Show Search UI
-        gsap.to("#search-ui", { opacity: 1, y: 0, duration: 1, delay: 2, ease: "power2.out" });
-      }
-    });
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // SCENE 3: WARP & SEARCH
-  // ═══════════════════════════════════════════════════════════════
-  window.handleSearch = function(e) {
-    if (e.key === 'Enter') triggerWarp();
-  }
-
-  window.triggerWarp = function() {
-    const query = document.getElementById('search-input').value.trim() || "COSMIC COLLECTION";
-    
-    // UI Out
-    gsap.to("#search-ui", { opacity: 0, duration: 0.4 });
-    gsap.to("#speech-bubble", { scale: 0, duration: 0.4 });
-    gsap.to("#lady-container", { y: "20%", opacity: 0, duration: 0.8, delay: 0.2 });
-
-    const tl = gsap.timeline();
-    
-    // Flash & Warp
-    tl.to("#flash-overlay", { opacity: 1, duration: 0.5 });
-    
-    tl.call(() => {
-      goToScene('warp');
-      gsap.set("#warp-bg", { opacity: 0, scale: 1 });
-      gsap.set("#warp-speed-lines", { opacity: 0 });
-    });
-
-    tl.to("#flash-overlay", { opacity: 0, duration: 0.5 });
-    
-    // The Warp Effect
-    tl.to("#warp-bg", { opacity: 1, duration: 0.5 });
-    tl.to("#warp-bg", { scale: 2.5, duration: 3, ease: "power3.in" }, "-=0.5");
-    tl.to("#warp-speed-lines", { opacity: 1, duration: 0.5 }, "-=3");
-    tl.to("#warp-speed-lines", { backgroundPosition: "1000px 0", duration: 1, repeat: 2, ease: "none" }, "-=2.5");
-    
-    // Flash on Arrival
-    tl.to("#flash-overlay", { opacity: 1, duration: 0.3 });
-    
-    tl.call(() => {
-      loadStore(query);
-    });
-
-    tl.to("#flash-overlay", { opacity: 0, duration: 1 });
-  };
-
-  // ═══════════════════════════════════════════════════════════════
-  // SCENE 4: STORE (SUPABASE FETCH & RENDER)
-  // ═══════════════════════════════════════════════════════════════
-  async function loadStore(query) {
-    document.getElementById('store-title').innerText = `SECTOR: ${query.toUpperCase()}`;
-    const grid = document.getElementById('product-grid');
-    grid.innerHTML = '<div class="spinner" style="margin: 50px auto; grid-column: 1 / -1;"></div>';
-
-    goToScene('store');
-    
-    // Reset Scroll
-    document.getElementById('scene-store').scrollTop = 0;
-
-    try {
-      let dbQuery = db.from('products').select('*, categories(name)');
-      
-      // If it's not the generic search, filter by name
-      if (query !== "COSMIC COLLECTION") {
-        dbQuery = dbQuery.ilike('name', `%${query}%`);
-      }
-
-      const { data, error } = await dbQuery;
-
-      if (error) throw error;
-
-      grid.innerHTML = '';
-      
-      if (data.length === 0) {
-        grid.innerHTML = '<h2 style="color:#ff6b1a; width:100%; text-align:center; grid-column: 1 / -1;">No artifacts found in this sector.</h2>';
-        return;
-      }
-
-      data.forEach((product, index) => {
-        const imgPath = product.images && product.images[0] ? product.images[0] : null;
-        const imgUrl = imgPath ? db.storage.from(BUCKET).getPublicUrl(imgPath).data.publicUrl : 'assets/card1.jpg';
+        const SUPABASE_URL = 'https://gynphsibkcrivosuamxp.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5bnBoc2lia2NyaXZvc3VhbXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4OTA0NzQsImV4cCI6MjEwNTQ2NjQ3NH0.GNKrZgJFj4496-kPzfdc2Fzv3bS8YO6CLrWPV4PyucM';
+        const BUCKET = 'product-images';
         
-        // Handle sizes
-        let sizeHTML = '';
-        if (product.sizes && product.sizes.length > 0) {
-          sizeHTML = `<div class="size-options">${product.sizes.map(s => `<div class="size-box">${s}</div>`).join('')}</div>`;
+        const { createClient } = supabase;
+        const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ═══════════════════════════════════════════════════════════════
+        // CUSTOM CURSOR & MAGNETIC BUTTONS
+        // ═══════════════════════════════════════════════════════════════
+        const cursorDot = document.getElementById('cursor-dot');
+        const cursorRing = document.getElementById('cursor-ring');
+        
+        let mouseX = 0, mouseY = 0;
+        let ringX = 0, ringY = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX; 
+            mouseY = e.clientY;
+            
+            gsap.to(cursorDot, { x: mouseX, y: mouseY, duration: 0.1 });
+        });
+
+        // Smooth delay for the ring
+        function renderCursor() {
+            ringX += (mouseX - ringX) * 0.15;
+            ringY += (mouseY - ringY) * 0.15;
+            gsap.set(cursorRing, { x: ringX, y: ringY });
+            requestAnimationFrame(renderCursor);
+        }
+        renderCursor();
+
+        // Magnetic Buttons (Hover Effect)
+        function applyMagneticEffect(btn) {
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                
+                gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
+                gsap.to(cursorRing, { scale: 1.5, borderColor: '#ff6b1a', duration: 0.2 });
+            });
+            
+            btn.addEventListener('mouseleave', () => {
+                gsap.to(btn, { x: 0, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" });
+                gsap.to(cursorRing, { scale: 1, borderColor: '#6c5ce7', duration: 0.2 });
+            });
         }
 
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        card.style.opacity = 0;
-        card.style.transform = 'translateY(50px)';
-        card.innerHTML = `
-          <div class="product-img-wrap">
-            <img src="${imgUrl}" alt="${product.name}">
-          </div>
-          <div class="product-info">
-            <div class="product-cat">${product.categories?.name || 'Cosmic'}</div>
-            <div class="product-name">${product.name}</div>
-            <div class="product-price">₹${product.price}</div>
-            ${sizeHTML}
-            <button class="buy-btn">Acquire Object</button>
-          </div>
-        `;
-        grid.appendChild(card);
+        document.querySelectorAll('.btn-open, #search-btn').forEach(applyMagneticEffect);
 
-        // Staggered Animation
-        gsap.to(card, { 
-          opacity: 1, 
-          y: 0, 
-          duration: 1, 
-          delay: index * 0.1, 
-          ease: "power3.out" 
+        // ═══════════════════════════════════════════════════════════════
+        // AI VOICE (WEB SPEECH API)
+        // ═══════════════════════════════════════════════════════════════
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1;
+                utterance.pitch = 1.1;
+                
+                const voices = window.speechSynthesis.getVoices();
+                const femaleVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Google UK English Female') || v.name.includes('Samantha'));
+                
+                if (femaleVoice) utterance.voice = femaleVoice;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // THREE.JS BACKGROUND (Dense Particles)
+        // ═══════════════════════════════════════════════════════════════
+        let scene, camera, renderer, particlesDust, particlesStar, particlesGlow;
+        let tX = 0, tY = 0;
+
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 10;
+
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            const loader = new THREE.TextureLoader();
+            loader.crossOrigin = true;
+            
+            // Dust Particles
+            loader.load('assets/dust.jpg', (texDust) => {
+                const geoDust = new THREE.BufferGeometry();
+                const verts = [];
+                for (let i = 0; i < 3000; i++) {
+                    verts.push((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60);
+                }
+                geoDust.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+                const matDust = new THREE.PointsMaterial({ size: 0.15, map: texDust, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false });
+                particlesDust = new THREE.Points(geoDust, matDust);
+                scene.add(particlesDust);
+            });
+
+            // Star Particles
+            loader.load('assets/star.jpg', (texStar) => {
+                const geoStar = new THREE.BufferGeometry();
+                const verts = [];
+                for (let i = 0; i < 500; i++) {
+                    verts.push((Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80);
+                }
+                geoStar.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+                const matStar = new THREE.PointsMaterial({ size: 1.5, map: texStar, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false });
+                particlesStar = new THREE.Points(geoStar, matStar);
+                scene.add(particlesStar);
+            });
+
+            // Glow Orbs (Using glow1.jpg)
+            loader.load('assets/glow1.jpg', (texGlow) => {
+                const geoGlow = new THREE.BufferGeometry();
+                const verts = [];
+                for (let i = 0; i < 100; i++) {
+                    verts.push((Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40);
+                }
+                geoGlow.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
+                const matGlow = new THREE.PointsMaterial({ size: 3.0, map: texGlow, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false });
+                particlesGlow = new THREE.Points(geoGlow, matGlow);
+                scene.add(particlesGlow);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                tX = (e.clientX - window.innerWidth / 2) * 0.001;
+                tY = (e.clientY - window.innerHeight / 2) * 0.001;
+            });
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if(particlesDust) {
+                particlesDust.rotation.y += 0.0005;
+                particlesDust.position.x += (tX * 5 - particlesDust.position.x) * 0.02;
+                particlesDust.position.y += (-tY * 5 - particlesDust.position.y) * 0.02;
+            }
+            if(particlesStar) {
+                particlesStar.rotation.y -= 0.0002;
+                particlesStar.position.x += (tX * 10 - particlesStar.position.x) * 0.05;
+                particlesStar.position.y += (-tY * 10 - particlesStar.position.y) * 0.05;
+            }
+            if(particlesGlow) {
+                particlesGlow.rotation.y += 0.001;
+                particlesGlow.position.x += (tX * 2 - particlesGlow.position.x) * 0.01;
+                particlesGlow.position.y += (-tY * 2 - particlesGlow.position.y) * 0.01;
+            }
+            
+            renderer.render(scene, camera);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SCENE MANAGER
+        // ═══════════════════════════════════════════════════════════════
+        function goToScene(sceneId) {
+            document.querySelectorAll('.scene').forEach(el => el.classList.remove('active'));
+            document.getElementById(`scene-${sceneId}`).classList.add('active');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // LOADER ANIMATION
+        // ═══════════════════════════════════════════════════════════════
+        window.addEventListener('DOMContentLoaded', () => {
+            const tl = gsap.timeline();
+            
+            // Draw SVG Circle
+            tl.to("#loader-circle", { strokeDashoffset: 0, duration: 3, ease: "power2.inOut" });
+            
+            tl.call(() => {
+                gsap.to("#scene-loader", { opacity: 0, duration: 1, onComplete: () => {
+                    document.getElementById('scene-loader').style.display = 'none';
+                    initThreeJS();
+                    goToScene('gate');
+                    startGateAnimations();
+                }});
+            });
         });
-      });
 
-    } catch (err) {
-      console.error(err);
-      grid.innerHTML = '<h2 style="color:red; width:100%; text-align:center; grid-column: 1 / -1;">System Error. Connection lost.</h2>';
-    }
-  }
+        // ═══════════════════════════════════════════════════════════════
+        // SCENE 1: GATE & SVG TEXT DRAW
+        // ═══════════════════════════════════════════════════════════════
+        function startGateAnimations() {
+            const textPath = document.querySelector('.svg-title text');
+            const length = textPath.getComputedTextLength();
+            
+            gsap.set(textPath, { strokeDasharray: length, strokeDashoffset: length });
+            
+            const tl = gsap.timeline();
+            tl.to(textPath, { strokeDashoffset: 0, duration: 3, ease: "power3.inOut" })
+              .to(textPath, { fill: '#ffffff', duration: 1, delay: 0.5 })
+              .to(".welcome-ui p", { opacity: 1, y: 0, duration: 1 }, "-=0.5")
+              .from(".btn-open", { scale: 0, opacity: 0, duration: 0.8, ease: "back.out(1.7)" }, "-=0.5");
+        }
 
-  // ═══════════════════════════════════════════════════════════════
-  // BOOT
-  // ═══════════════════════════════════════════════════════════════
-  window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      gsap.to("#loading-overlay", { opacity: 0, duration: 1.5, onComplete: () => {
-        document.getElementById('loading-overlay').style.display = 'none';
-        initThreeJS(); 
-      }});
-    }, 2000);
-  });
+        window.openGate = function() {
+            const tl = gsap.timeline();
+            
+            tl.to("#welcome-ui", { opacity: 0, duration: 0.5, y: -50 });
+            tl.to("#gateleft", { rotateY: -120, x: -150, duration: 2.5, ease: "power3.inOut" }, "-=0.2");
+            tl.to("#gateright", { rotateY: 120, x: 150, duration: 2.5, ease: "power3.inOut" }, "<");
+            tl.to("#portal", { opacity: 1, scale: 4, duration: 2, ease: "power2.in" }, "-=2");
+            tl.to(".gate-wrapper", { scale: 8, filter: "blur(30px)", duration: 1.5, ease: "power4.in" }, "-=1");
+            
+            tl.call(() => {
+                goToScene('carpet');
+                gsap.set(".gate-wrapper", { scale: 1, filter: "none" });
+                gsap.set("#gateleft", { rotateY: 0, x: 0 });
+                gsap.set("#gateright", { rotateY: 0, x: 0 });
+                gsap.set("#portal", { opacity: 0, scale: 1 });
+                startCarpetSequence();
+            });
+        };
 
-</script>
+        // ═══════════════════════════════════════════════════════════════
+        // SCENE 2: CARPET
+        // ═══════════════════════════════════════════════════════════════
+        function startCarpetSequence() {
+            const tl = gsap.timeline();
 
+            // Camera drop
+            gsap.set("#scene-carpet", { backgroundPosition: "50% -20%", backgroundSize: "180%" });
+            tl.to("#scene-carpet", { backgroundPosition: "50% 50%", backgroundSize: "100%", duration: 3, ease: "power3.out" });
+
+            // Shops & Characters fade in
+            tl.to(".bg-shop", { opacity: 0.4, duration: 2 }, "-=2");
+            tl.to(".char-sprite", { opacity: 1, y: -20, duration: 2, stagger: 0.2 }, "-=1.5");
+            
+            // Endless floating for characters
+            gsap.to(".char-sprite", { y: "+=20", duration: 4, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 2 });
+
+            // Lady walks in from front
+            gsap.set("#lady-container", { y: "100%", scale: 2, opacity: 0 });
+            tl.to("#lady-container", { y: "0%", opacity: 1, duration: 0.1 });
+            
+            let walkFrame = 1;
+            const walkInterval = setInterval(() => {
+                walkFrame = walkFrame === 1 ? 2 : (walkFrame === 2 ? 3 : 1);
+                document.getElementById('lady-sprite').src = `assets/ladywalk${walkFrame}.png`;
+            }, 180); 
+
+            tl.to("#lady-container", { scale: 1, duration: 4, ease: "power2.out" });
+            
+            tl.call(() => {
+                clearInterval(walkInterval);
+                document.getElementById('lady-sprite').src = `assets/ladysmile.png`;
+                
+                gsap.to("#speech-bubble", { scale: 1, duration: 0.8, ease: "back.out(1.7)" });
+                
+                // Text Scramble Effect for Speech
+                const finalText1 = "Welcome to VAA Store! We would be happy to host you today.";
+                scrambleText("speech-text", finalText1, 2000);
+                speak(finalText1);
+                
+                setTimeout(() => {
+                    const finalText2 = "What product are you looking for?";
+                    scrambleText("speech-text", finalText2, 1500);
+                    speak(finalText2);
+                    gsap.to("#search-ui", { opacity: 1, y: 0, duration: 0.8 });
+                }, 5000);
+            });
+        }
+
+        // Text Scramble Function
+        function scrambleText(elementId, finalText, duration) {
+            const el = document.getElementById(elementId);
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!<>-_\\/[]{}—=+*^?#________";
+            let frame = 0;
+            const totalFrames = duration / 16;
+            const queue = finalText.split('').map((char, i) => ({ 
+                to: char, 
+                start: Math.floor(Math.random() * (totalFrames * 0.5)), 
+                end: Math.floor(Math.random() * (totalFrames * 0.5)) + (totalFrames * 0.5) 
+            }));
+            
+            function update() {
+                let output = '';
+                let complete = 0;
+                
+                for (let i = 0; i < queue.length; i++) {
+                    let { to, start, end } = queue[i];
+                    if (frame >= end) { complete++; output += to; }
+                    else if (frame >= start) { output += chars[Math.floor(Math.random() * chars.length)]; }
+                    else { output += ' '; }
+                }
+                
+                el.innerHTML = output;
+                if (complete === queue.length) return;
+                frame++;
+                requestAnimationFrame(update);
+            }
+            update();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SCENE 3: SEARCH & SHIP LANDING
+        // ═══════════════════════════════════════════════════════════════
+        window.handleSearch = function(e) { 
+            if (e.key === 'Enter') triggerWarp(); 
+        }
+
+        window.triggerWarp = function() {
+            const query = document.getElementById('search-input').value.trim() || "COSMIC COLLECTION";
+            
+            document.getElementById('lady-sprite').src = `assets/ladypoint.png`;
+            scrambleText("speech-text", "Ok, let's take a ride.", 1000);
+            speak("Okay, let's take a ride.");
+            
+            gsap.to("#search-ui", { opacity: 0, duration: 0.4 });
+
+            const tl = gsap.timeline({ delay: 2 });
+            
+            // Ship lands from above
+            tl.to("#ship-container", { top: "10%", duration: 1.5, ease: "bounce.out" });
+            
+            // Camera zooms into ship window
+            tl.to("#scene-carpet", { scale: 3, opacity: 0, duration: 1.5, ease: "power2.in" }, "+=0.5");
+            
+            tl.call(() => { 
+                goToScene('warp'); 
+                gsap.set("#warp-bg", { opacity: 0, scale: 1 }); 
+            });
+
+            // Warp effect
+            tl.to("#warp-bg", { opacity: 1, duration: 0.5 });
+            tl.to("#warp-bg", { scale: 3, duration: 3, ease: "power3.in" });
+            tl.to("#warp-flash", { opacity: 1, duration: 1 }, "-=1");
+            
+            tl.call(() => { loadStore(query); });
+            
+            tl.to("#warp-flash", { opacity: 0, duration: 1 });
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // SCENE 4: STORE & SCROLLTRIGGER
+        // ═══════════════════════════════════════════════════════════════
+        async function loadStore(query) {
+            document.getElementById('store-title').innerText = `SECTOR: ${query.toUpperCase()}`;
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '<div style="color:#ffffff; font-size:1.5rem; text-align:center; grid-column:1/-1;">Scanning Universe...</div>';
+            
+            goToScene('store');
+            document.getElementById('scene-store').scrollTop = 0;
+
+            // ScrollTrigger for Store Planets
+            gsap.to("#planet-ice", {
+                y: -200, 
+                rotation: 45,
+                scrollTrigger: { trigger: ".scroll-hero", start: "top top", end: "bottom top", scrub: 1 }
+            });
+            
+            gsap.to("#planet-rocky", {
+                y: -300, 
+                rotation: -45,
+                scrollTrigger: { trigger: ".scroll-hero", start: "top top", end: "bottom top", scrub: 1 }
+            });
+
+            try {
+                let dbQuery = db.from('products').select('*, categories(name)');
+                if (query !== "COSMIC COLLECTION") { 
+                    dbQuery = dbQuery.ilike('name', `%${query}%`); 
+                }
+
+                const { data, error } = await dbQuery;
+                if (error) throw error;
+
+                grid.innerHTML = '';
+                if (data.length === 0) {
+                    grid.innerHTML = '<h2 style="color:#ff6b1a; text-align:center; grid-column:1/-1;">No items found in this sector.</h2>';
+                    return;
+                }
+
+                data.forEach((product, index) => {
+                    const imgPath = product.images && product.images[0] ? product.images[0] : null;
+                    const imgUrl = imgPath ? db.storage.from(BUCKET).getPublicUrl(imgPath).data.publicUrl : 'assets/card1.jpg';
+                    
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.innerHTML = `
+                        <div class="product-img-wrap">
+                            <img src="${imgUrl}">
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">${product.name}</div>
+                            <div class="product-price">₹${product.price}</div>
+                            <button class="buy-btn">ACQUIRE</button>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                    
+                    // Add magnetic hover to dynamically created buttons
+                    const btn = card.querySelector('.buy-btn');
+                    applyMagneticEffect(btn);
+
+                    gsap.from(card, { 
+                        opacity: 0, 
+                        y: 100, 
+                        rotationX: -20, 
+                        duration: 1, 
+                        delay: index * 0.1, 
+                        ease: "power3.out",
+                        scrollTrigger: { trigger: card, start: "top bottom-=50px" }
+                    });
+                });
+
+            } catch (err) {
+                grid.innerHTML = '<h2 style="color:red; text-align:center; grid-column:1/-1;">System Error.</h2>';
+            }
+        }
+    </script>
 </body>
 </html>
