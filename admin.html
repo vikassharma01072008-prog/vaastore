@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VAA Store — Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #0a0a0f; color: #e8e8f0; min-height: 100vh; }
+    .admin-wrap { max-width: 800px; margin: 0 auto; padding: 20px; }
+    
+    /* LOGIN */
+    .login-box { max-width: 360px; margin: 120px auto; padding: 32px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; backdrop-filter: blur(20px); }
+    .login-box h1 { font-size: 24px; margin-bottom: 24px; text-align: center; color: #6c5ce7; }
+    
+    input, textarea, select { width: 100%; padding: 14px 16px; margin-bottom: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: #fff; font-size: 15px; outline: none; }
+    input:focus, textarea:focus, select:focus { border-color: #6c5ce7; }
+    textarea { min-height: 100px; resize: vertical; }
+    
+    button { padding: 14px 24px; border: none; border-radius: 12px; background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: #fff; font-weight: 600; font-size: 15px; cursor: pointer; transition: transform 0.2s, opacity 0.2s; }
+    button:hover { transform: scale(1.02); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    button.danger { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+    button.ghost { background: transparent; border: 1px solid rgba(255,255,255,0.15); }
+    
+    .hidden { display: none !important; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 24px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+    .tabs button { flex: 1; padding: 12px; background: rgba(255,255,255,0.05); }
+    .tabs button.active { background: #6c5ce7; }
+    
+    .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+    .card h3 { margin-bottom: 16px; font-size: 16px; color: #a29bfe; }
+    
+    .image-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 12px; }
+    .image-preview img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+    
+    .file-input-wrap { border: 2px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 24px; text-align: center; cursor: pointer; transition: border-color 0.2s; }
+    .file-input-wrap:hover { border-color: #6c5ce7; }
+    .file-input-wrap input { display: none; }
+    
+    .status { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 14px; }
+    .status.success { background: rgba(46,204,113,0.15); color: #2ecc71; }
+    .status.error { background: rgba(231,76,60,0.15); color: #e74c3c; }
+    .status.info { background: rgba(52,152,219,0.15); color: #3498db; }
+    
+    .product-item { display: flex; gap: 12px; align-items: center; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 8px; }
+    .product-item img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
+    .product-item .info { flex: 1; }
+    .product-item .info strong { display: block; font-size: 14px; }
+    .product-item .info span { font-size: 12px; color: #888; }
+    
+    .loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+    .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #6c5ce7; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="admin-wrap">
+  <!-- LOGIN -->
+  <div id="loginView" class="login-box">
+    <h1>VAA Store Admin</h1>
+    <input type="email" id="loginEmail" value="admin@vaastore.com" readonly style="opacity: 0.7; cursor: not-allowed;">
+    <input type="password" id="loginPass" placeholder="Password">
+    <button onclick="handleLogin()" style="width:100%">Enter</button>
+    <p id="loginError" class="status error hidden" style="margin-top:12px"></p>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div id="adminView" class="hidden">
+    <div class="topbar">
+      <h2>VAA Store Admin</h2>
+      <button class="ghost" onclick="handleLogout()">Logout</button>
+    </div>
+
+    <div id="globalStatus"></div>
+
+    <div class="tabs">
+      <button id="tabProducts" class="active" onclick="switchTab('products')">Products</button>
+      <button id="tabCategories" onclick="switchTab('categories')">Categories</button>
+    </div>
+
+    <!-- PRODUCTS TAB -->
+    <div id="productsPane">
+      <div class="card">
+        <h3>Add Product</h3>
+        <select id="prodCategory">
+          <option value="">Select category...</option>
+        </select>
+        <input type="text" id="prodName" placeholder="Product name (e.g. Cosmic Hoodie)">
+        <textarea id="prodDesc" placeholder="Description"></textarea>
+        <input type="number" id="prodPrice" placeholder="Price (₹)" step="0.01">
+        <input type="text" id="prodSizes" placeholder="Sizes (comma separated: S,M,L,XL)">
+        
+        <div class="file-input-wrap" onclick="document.getElementById('prodImages').click()">
+          <input type="file" id="prodImages" accept="image/*" multiple onchange="handleImageSelect(event)">
+          <p>Click to select multiple product photos</p>
+          <p style="font-size:12px;color:#888;margin-top:4px">Auto-compressed to 1MB before upload</p>
+        </div>
+        <div id="imagePreview" class="image-preview"></div>
+        
+        <button onclick="addProduct()" style="margin-top:16px;width:100%">Upload Product</button>
+      </div>
+      <div class="card">
+        <h3>Existing Products</h3>
+        <div id="productList"></div>
+      </div>
+    </div>
+
+    <!-- CATEGORIES TAB -->
+    <div id="categoriesPane" class="hidden">
+      <div class="card">
+        <h3>Add Category</h3>
+        <input type="text" id="catName" placeholder="Category name (e.g. Hoodies)">
+        <button onclick="addCategory()">Create Category</button>
+      </div>
+      <div class="card">
+        <h3>Existing Categories</h3>
+        <div id="categoryList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="loadingOverlay" class="loading-overlay hidden">
+  <div class="spinner"></div>
+</div>
+
+<script>
+  // ─── CONFIG ───
+  const SUPABASE_URL = 'https://gynphsibkcrivosuamxp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5bnBoc2lia2NyaXZvc3VhbXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4OTA0NzQsImV4cCI6MjEwNTQ2NjQ3NH0.GNKrZgJFj4496-kPzfdc2Fzv3bS8YO6CLrWPV4PyucM';
+  const BUCKET = 'product-images';
+  
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  
+  let selectedFiles = []; 
+  let categoriesCache = [];
+
+  // ─── UI HELPERS ───
+  const $ = (id) => document.getElementById(id);
+  function showLoading(show) { $('loadingOverlay').classList.toggle('hidden', !show); }
+  function showStatus(msg, type = 'info') {
+    const el = $('globalStatus');
+    el.innerHTML = `<div class="status ${type}">${msg}</div>`;
+    setTimeout(() => { el.innerHTML = ''; }, 4000);
+  }
+
+  // ─── AUTH ───
+  async function handleLogin() {
+    const email = $('loginEmail').value.trim();
+    const pass = $('loginPass').value;
+    if (!pass) return;
+    
+    $('loginError').classList.add('hidden');
+    showLoading(true);
+    
+    const { error } = await db.auth.signInWithPassword({ email, password: pass });
+    showLoading(false);
+    
+    if (error) {
+      $('loginError').textContent = error.message;
+      $('loginError').classList.remove('hidden');
+      return;
+    }
+    initPanel();
+  }
+  
+  async function handleLogout() {
+    await db.auth.signOut();
+    $('adminView').classList.add('hidden');
+    $('loginView').classList.remove('hidden');
+    selectedFiles = [];
+  }
+  
+  async function checkSession() {
+    const { data: { session } } = await db.auth.getSession();
+    if (session) initPanel();
+  }
+  
+  function initPanel() {
+    $('loginView').classList.add('hidden');
+    $('adminView').classList.remove('hidden');
+    loadCategories();
+    loadProducts();
+  }
+
+  // ─── TABS ───
+  function switchTab(tab) {
+    $('categoriesPane').classList.toggle('hidden', tab !== 'categories');
+    $('productsPane').classList.toggle('hidden', tab !== 'products');
+    $('tabCategories').classList.toggle('active', tab === 'categories');
+    $('tabProducts').classList.toggle('active', tab === 'products');
+  }
+
+  // ─── CATEGORIES ───
+  async function loadCategories() {
+    const { data, error } = await db.from('categories').select('*').order('created_at', { ascending: false });
+    if (error) { showStatus(error.message, 'error'); return; }
+    
+    categoriesCache = data;
+    
+    $('categoryList').innerHTML = data.length 
+      ? data.map(c => `
+          <div class="product-item">
+            <div class="info"><strong>${c.name}</strong><span>${c.slug}</span></div>
+            <button class="danger" onclick="deleteCategory('${c.id}')" style="padding:8px 12px;font-size:12px">Delete</button>
+          </div>
+        `).join('')
+      : '<p style="color:#888;font-size:14px">No categories yet.</p>';
+    
+    const sel = $('prodCategory');
+    sel.innerHTML = '<option value="">Select category...</option>' + 
+      data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+  
+  async function addCategory() {
+    const name = $('catName').value.trim();
+    if (!name) return;
+    
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    showLoading(true);
+    
+    const { error } = await db.from('categories').insert({ name, slug });
+    showLoading(false);
+    
+    if (error) { showStatus(error.message, 'error'); return; }
+    $('catName').value = '';
+    showStatus('Category created', 'success');
+    loadCategories();
+  }
+  
+  async function deleteCategory(id) {
+    if (!confirm('Delete this category? Products inside will also be deleted.')) return;
+    showLoading(true);
+    const { error } = await db.from('categories').delete().eq('id', id);
+    showLoading(false);
+    if (error) { showStatus(error.message, 'error'); return; }
+    showStatus('Category deleted', 'success');
+    loadCategories();
+    loadProducts();
+  }
+
+  // ─── IMAGE COMPRESSION & UPLOAD ───
+  async function handleImageSelect(event) {
+    const files = Array.from(event.target.files);
+    if (!files.length) return;
+    
+    showLoading(true);
+    selectedFiles = [];
+    $('imagePreview').innerHTML = '';
+    
+    for (const file of files) {
+      try {
+        const compressed = await imageCompression(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1600,
+          useWebWorker: true,
+          initialQuality: 0.8
+        });
+        selectedFiles.push(compressed);
+        
+        const url = URL.createObjectURL(compressed);
+        const img = document.createElement('img');
+        img.src = url;
+        $('imagePreview').appendChild(img);
+      } catch (err) {
+        console.error('Compression failed:', err);
+      }
+    }
+    showLoading(false);
+    event.target.value = '';
+  }
+
+  async function uploadImages(files) {
+    const paths = [];
+    for (const file of files) {
+      const ext = file.name.split('.').pop() || 'jpg';
+      const path = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      
+      const { error } = await db.storage.from(BUCKET).upload(path, file, { cacheControl: '3600', upsert: false });
+      if (error) throw new Error(`Upload failed: ${error.message}`);
+      paths.push(path);
+    }
+    return paths;
+  }
+
+  // ─── PRODUCTS ───
+  async function addProduct() {
+    const category_id = $('prodCategory').value;
+    const name = $('prodName').value.trim();
+    const description = $('prodDesc').value.trim();
+    const price = parseFloat($('prodPrice').value);
+    const sizesRaw = $('prodSizes').value.trim();
+    
+    if (!category_id || !name || isNaN(price)) {
+      showStatus('Fill required fields: category, name, price', 'error');
+      return;
+    }
+    
+    const sizes = sizesRaw ? sizesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+    
+    showLoading(true);
+    
+    try {
+      const imagePaths = selectedFiles.length ? await uploadImages(selectedFiles) : [];
+      
+      const { error } = await db.from('products').insert({
+        category_id, name, description, price, sizes, images: imagePaths
+      });
+      
+      if (error) throw error;
+      
+      $('prodName').value = '';
+      $('prodDesc').value = '';
+      $('prodPrice').value = '';
+      $('prodSizes').value = '';
+      selectedFiles = [];
+      $('imagePreview').innerHTML = '';
+      
+      showStatus('Product created', 'success');
+      loadProducts();
+    } catch (err) {
+      showStatus(err.message, 'error');
+    } finally {
+      showLoading(false);
+    }
+  }
+  
+  async function loadProducts() {
+    const { data, error } = await db.from('products').select('*, categories(name)').order('created_at', { ascending: false });
+    if (error) { showStatus(error.message, 'error'); return; }
+    
+    $('productList').innerHTML = data.length
+      ? data.map(p => {
+          const img = p.images?.[0];
+          const imgUrl = img ? db.storage.from(BUCKET).getPublicUrl(img).data.publicUrl : '';
+          return `
+            <div class="product-item">
+              ${imgUrl ? `<img src="${imgUrl}" alt="">` : '<div style="width:48px;height:48px;background:#1a1a2e;border-radius:8px"></div>'}
+              <div class="info">
+                <strong>${p.name}</strong>
+                <span>${p.categories?.name || 'Uncategorized'} · ₹${p.price} · ${p.images?.length || 0} images</span>
+              </div>
+              <button class="danger" onclick="deleteProduct('${p.id}')" style="padding:8px 12px;font-size:12px">Delete</button>
+            </div>
+          `;
+        }).join('')
+      : '<p style="color:#888;font-size:14px">No products yet.</p>';
+  }
+  
+  async function deleteProduct(id) {
+    if (!confirm('Delete this product?')) return;
+    showLoading(true);
+    const { error } = await db.from('products').delete().eq('id', id);
+    showLoading(false);
+    if (error) { showStatus(error.message, 'error'); return; }
+    showStatus('Product deleted', 'success');
+    loadProducts();
+  }
+
+  // ─── BOOT ───
+  checkSession();
+</script>
+
+</body>
+</html>
