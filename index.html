@@ -5,1183 +5,1161 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VAA STORE — The Cosmic Bazaar</title>
     
-    <!-- Fonts -->
+    <!-- ═══════════════════════════════════════════════════════════════
+         FONTS & EXTERNAL RESOURCES
+    ═══════════════════════════════════════════════════════════════ -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@300;400;600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     
-    <!-- Core Libraries -->
+    <!-- ═══════════════════════════════════════════════════════════════
+         CORE LIBRARIES
+    ═══════════════════════════════════════════════════════════════ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
+    <!-- ═══════════════════════════════════════════════════════════════
+         THREE.JS POST-PROCESSING (BLOOM)
+    ═══════════════════════════════════════════════════════════════ -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+
     <style>
-        /* ═══════════════════════════════════════════════
+        /* ═══════════════════════════════════════════════════════════════
            GLOBAL VARIABLES & RESET
-        ═══════════════════════════════════════════════ */
+        ═══════════════════════════════════════════════════════════════ */
         :root {
             --primary: #6c5ce7;
+            --primary-light: #a29bfe;
             --accent: #ff6b1a;
+            --accent-light: #ff9e6b;
             --bg-dark: #020205;
+            --bg-deep: #05050a;
             --glass: rgba(15, 15, 25, 0.75);
+            --glass-heavy: rgba(5, 5, 10, 0.9);
             --border-glass: rgba(108, 92, 231, 0.4);
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
             --font-display: 'Orbitron', sans-serif;
             --font-body: 'Space Grotesk', sans-serif;
+            --font-ui: 'Inter', sans-serif;
+            --gold: #ffd400;
+            --cyan: #00e5ff;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            cursor: none; /* Custom Cursor */
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            cursor: none; /* Custom Cursor Enabled */
+            -webkit-tap-highlight-color: transparent;
         }
 
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: var(--bg-dark);
-            color: #ffffff;
-            font-family: var(--font-body);
-            -webkit-font-smoothing: antialiased;
+        body, html { 
+            width: 100%; 
+            height: 100%; 
+            overflow: hidden; 
+            background-color: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: var(--font-body); 
+            -webkit-font-smoothing: antialiased; 
         }
 
-        #app {
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-            overflow: hidden;
+        #app { 
+            width: 100vw; 
+            height: 100vh; 
+            position: relative; 
+            overflow: hidden; 
         }
 
-        /* ═══════════════════════════════════════════════
+        /* ═══════════════════════════════════════════════════════════════
            CUSTOM CURSOR
-        ═══════════════════════════════════════════════ */
-        #cursor-dot {
-            position: fixed;
-            width: 8px;
-            height: 8px;
-            background-color: var(--accent);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 99999;
-            transform: translate(-50%, -50%);
+        ═══════════════════════════════════════════════════════════════ */
+        #cursor-dot { 
+            position: fixed; 
+            width: 8px; 
+            height: 8px; 
+            background-color: var(--accent); 
+            border-radius: 50%; 
+            pointer-events: none; 
+            z-index: 99999; 
+            transform: translate(-50%, -50%); 
+            box-shadow: 0 0 15px var(--accent); 
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+        }
+
+        #cursor-ring { 
+            position: fixed; 
+            width: 40px; 
+            height: 40px; 
+            border: 1px solid var(--primary); 
+            border-radius: 50%; 
+            pointer-events: none; 
+            z-index: 99998; 
+            transform: translate(-50%, -50%); 
+            transition: width 0.3s, height 0.3s, border-color 0.3s, transform 0.1s; 
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           3D CANVAS & GLOBAL OVERLAYS
+        ═══════════════════════════════════════════════════════════════ */
+        #webgl-canvas { 
+            position: absolute; 
+            inset: 0; 
+            z-index: 1; 
+            pointer-events: none; 
+        }
+
+        .vignette { 
+            position: absolute; 
+            inset: 0; 
+            pointer-events: none; 
+            z-index: 50; 
+            box-shadow: inset 0 0 250px rgba(0, 0, 0, 0.95); 
+        }
+
+        #flash-overlay { 
+            position: absolute; 
+            inset: 0; 
+            background: #fff; 
+            opacity: 0; 
+            pointer-events: none; 
+            z-index: 999; 
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           LOADING SCREEN
+        ═══════════════════════════════════════════════════════════════ */
+        #loading-overlay { 
+            position: absolute; 
+            inset: 0; 
+            background: #000; 
+            z-index: 10000; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            transition: opacity 1.5s ease; 
+        }
+
+        .loader-logo { 
+            width: 200px; 
+            margin-bottom: 40px; 
+            filter: drop-shadow(0 0 30px var(--primary)); 
+            animation: pulse-logo 2s infinite alternate; 
+        }
+
+        @keyframes pulse-logo { 
+            from { transform: scale(0.95); filter: drop-shadow(0 0 10px var(--primary)); } 
+            to { transform: scale(1.05); filter: drop-shadow(0 0 60px var(--accent)); } 
+        }
+
+        .loader-bar-wrap { 
+            width: 300px; 
+            height: 4px; 
+            background: rgba(255,255,255,0.05); 
+            border-radius: 10px; 
+            overflow: hidden; 
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .loader-bar { 
+            width: 0%; 
+            height: 100%; 
+            background: linear-gradient(90deg, var(--primary), var(--accent)); 
+            transition: width 0.3s ease; 
             box-shadow: 0 0 15px var(--accent);
         }
 
-        #cursor-ring {
-            position: fixed;
-            width: 40px;
-            height: 40px;
-            border: 1px solid var(--primary);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 99998;
-            transform: translate(-50%, -50%);
-            transition: width 0.3s, height 0.3s, border-color 0.3s;
-        }
-
-        /* ═══════════════════════════════════════════════
-           THREE.JS BACKGROUND & VIGNETTE
-        ═══════════════════════════════════════════════ */
-        #canvas-container {
-            position: absolute;
-            inset: 0;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .vignette {
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            z-index: 50;
-            box-shadow: inset 0 0 250px rgba(0, 0, 0, 0.95);
-        }
-
-        /* ═══════════════════════════════════════════════
-           SCENE MANAGER BASE
-        ═══════════════════════════════════════════════ */
-        .scene {
-            position: absolute;
-            inset: 0;
-            z-index: 2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 1s ease;
-        }
-
-        .scene.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        /* ═══════════════════════════════════════════════
-           SCENE 0: LOADER (SVG RING + LOGO)
-        ═══════════════════════════════════════════════ */
-        #scene-loader {
-            background-color: #000000;
-            z-index: 10000;
-            flex-direction: column;
-        }
-
-        .loader-logo {
-            width: 180px;
-            margin-bottom: 40px;
-            filter: drop-shadow(0 0 30px var(--primary));
-            animation: pulse-logo 2s infinite alternate;
-        }
-
-        @keyframes pulse-logo {
-            from { transform: scale(0.95); filter: drop-shadow(0 0 10px var(--primary)); }
-            to { transform: scale(1.05); filter: drop-shadow(0 0 50px var(--accent)); }
-        }
-
-        .svg-loader-circle {
-            width: 250px;
-            height: 250px;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-        }
-
-        .svg-loader-circle circle {
-            fill: none;
-            stroke: var(--accent);
-            stroke-width: 2;
-            stroke-dasharray: 785;
-            stroke-dashoffset: 785;
-            transform-origin: center;
-            transform: rotate(-90deg);
-        }
-
-        /* ═══════════════════════════════════════════════
-           SCENE 1: THE GATE
-        ═══════════════════════════════════════════════ */
-        #scene-gate {
-            background-color: #000000;
-            perspective: 2000px;
-        }
-
-        .gate-wrapper {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transform-style: preserve-3d;
-        }
-
-        .gate-half {
-            position: absolute;
-            width: 50vw;
-            height: 100vh;
-            background-size: cover;
-            background-position: center;
-            z-index: 5;
-        }
-
-        #gateleft {
-            left: 0;
-            background-image: url('assets/gateleft.jpeg');
-            box-shadow: inset -80px 0 150px rgba(0, 0, 0, 0.95);
-        }
-
-        #gateright {
-            right: 0;
-            background-image: url('assets/gateright.jpeg');
-            box-shadow: inset 80px 0 150px rgba(0, 0, 0, 0.95);
-        }
-
-        #portal {
-            position: absolute;
-            width: 100vw;
-            height: 100vh;
-            background-image: url('assets/portal.jpeg');
-            background-size: contain;
-            background-position: center;
-            background-repeat: no-repeat;
-            opacity: 0;
-            z-index: 1;
-            transform: scale(0.4);
-            filter: drop-shadow(0 0 80px var(--accent));
-        }
-
-        .welcome-ui {
-            position: absolute;
-            text-align: center;
-            z-index: 10;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .svg-title {
-            width: 90%;
-            max-width: 900px;
-            overflow: visible;
-        }
-
-        .svg-title text {
+        .loader-text {
+            margin-top: 25px;
             font-family: var(--font-display);
-            font-size: 9rem;
-            font-weight: 900;
-            fill: transparent;
-            stroke: #ffffff;
-            stroke-width: 2;
-            letter-spacing: 15px;
-        }
-
-        .welcome-ui p {
-            color: var(--accent);
-            font-size: 1.2rem;
-            margin: 20px 0 50px 0;
-            letter-spacing: 12px;
-            text-transform: uppercase;
-            font-weight: 600;
-            opacity: 0;
-        }
-
-        .btn-open {
-            padding: 20px 60px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #ffffff;
-            background-color: rgba(108, 92, 231, 0.1);
-            border: 1px solid var(--primary);
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.4s ease;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 30px rgba(108, 92, 231, 0.2);
-            font-family: var(--font-display);
-            letter-spacing: 5px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .btn-open::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn-open:hover::before {
-            left: 100%;
-        }
-
-        .btn-open:hover {
-            background-color: var(--primary);
-            box-shadow: 0 0 60px rgba(108, 92, 231, 0.8);
-        }
-
-        /* ═══════════════════════════════════════════════
-           SCENE 2: THE RED CARPET
-        ═══════════════════════════════════════════════ */
-        #scene-carpet {
-            background-image: url('assets/carpet.jpeg');
-            background-size: cover;
-            background-position: center;
-            perspective: 1000px;
-            background-color: #000000;
-        }
-
-        .bg-shop {
-            position: absolute;
-            bottom: 25%;
-            width: 30vw;
-            height: 40vh;
-            background-size: cover;
-            border-radius: 20px;
-            opacity: 0;
-            filter: blur(10px);
-            border: 1px solid rgba(108, 92, 231, 0.2);
-        }
-
-        #shop-left {
-            left: -5%;
-            background-image: url('assets/card1.jpg');
-            transform: rotateY(20deg);
-        }
-
-        #shop-right {
-            right: -5%;
-            background-image: url('assets/card2.jpg');
-            transform: rotateY(-20deg);
-        }
-
-        .char-sprite {
-            position: absolute;
-            bottom: 0;
-            height: 50vh;
-            opacity: 0;
-            filter: blur(5px);
-            mix-blend-mode: screen;
-            z-index: 3;
-        }
-
-        #char-doc { left: 10%; bottom: 10%; }
-        #char-pol { left: 25%; bottom: 0; height: 45vh; }
-        #char-biz { right: 25%; bottom: 10%; height: 48vh; }
-        #char-shop1 { right: 10%; bottom: 0; height: 42vh; }
-
-        #lady-container {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%) translateY(100%) scale(2);
-            height: 85vh;
-            z-index: 10;
-            transform-origin: bottom center;
-        }
-
-        #lady-sprite {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            filter: drop-shadow(0 0 40px rgba(108, 92, 231, 0.6));
-        }
-
-        #ship-container {
-            position: absolute;
-            top: -120%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90vw;
-            max-width: 800px;
-            z-index: 20;
-        }
-
-        #ship-sprite {
-            width: 100%;
-            filter: drop-shadow(0 30px 60px rgba(0, 0, 0, 0.9));
-        }
-
-        #speech-bubble {
-            position: absolute;
-            top: 20%;
-            left: 50%;
-            transform: translateX(-50%) scale(0);
-            transform-origin: bottom center;
-            background-color: var(--glass);
-            border: 1px solid var(--border-glass);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 30px 40px;
-            z-index: 15;
-            text-align: center;
-            width: 90%;
-            max-width: 600px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-        }
-
-        #speech-bubble h3 {
-            font-family: var(--font-display);
-            color: var(--accent);
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-        }
-
-        #speech-bubble p {
-            font-size: 1.4rem;
-            line-height: 1.5;
-            font-weight: 300;
-        }
-
-        #search-ui {
-            position: absolute;
-            bottom: 8%;
-            left: 50%;
-            transform: translateX(-50%) translateY(50px);
-            width: 90%;
-            max-width: 700px;
-            opacity: 0;
-            z-index: 30;
-            display: flex;
-            gap: 15px;
-            background-color: var(--glass);
-            padding: 12px;
-            border-radius: 60px;
-            border: 1px solid var(--border-glass);
-            backdrop-filter: blur(20px);
-        }
-
-        #search-input {
-            flex: 1;
-            padding: 15px 30px;
-            border-radius: 50px;
-            border: none;
-            background-color: rgba(0, 0, 0, 0.5);
-            color: #ffffff;
-            font-size: 1.1rem;
-            outline: none;
-            font-family: var(--font-body);
-        }
-
-        #search-btn {
-            padding: 0 50px;
-            border-radius: 50px;
-            background-color: var(--accent);
-            border: none;
-            color: #ffffff;
-            font-weight: bold;
-            cursor: pointer;
-            font-family: var(--font-display);
-            font-size: 1rem;
-            letter-spacing: 2px;
-            transition: 0.3s;
-        }
-
-        #search-btn:hover {
-            background-color: #ff8c4a;
-            box-shadow: 0 0 30px var(--accent);
-        }
-
-        /* ═══════════════════════════════════════════════
-           SCENE 3: WARP
-        ═══════════════════════════════════════════════ */
-        #scene-warp {
-            background-color: #000000;
-            z-index: 50;
-            overflow: hidden;
-        }
-
-        #warp-bg {
-            position: absolute;
-            inset: 0;
-            background-image: url('assets/window.jpg');
-            background-size: cover;
-            background-position: center;
-            transform: scale(1);
-            opacity: 0;
-        }
-
-        #warp-flash {
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle, #ffffff, transparent);
-            opacity: 0;
-            z-index: 60;
-        }
-
-        /* ═══════════════════════════════════════════════
-           SCENE 4: PLANET STORE (SCROLL JACKED)
-        ═══════════════════════════════════════════════ */
-        #scene-store {
-            background-image: url('assets/space.jpeg');
-            background-size: cover;
-            background-position: center;
-            display: block;
-            overflow-y: auto;
-            overflow-x: hidden;
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        #scene-store.active {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        #scene-store::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-color: rgba(2, 2, 5, 0.85);
-            backdrop-filter: blur(10px);
-            z-index: 1;
-        }
-
-        .store-nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            padding: 25px 50px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background-color: rgba(5, 5, 10, 0.6);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(108, 92, 231, 0.2);
-            z-index: 100;
-        }
-
-        .store-nav h1 {
-            font-family: var(--font-display);
-            font-size: 2rem;
+            font-size: 10px;
             letter-spacing: 8px;
-            color: #ffffff;
+            color: var(--primary-light);
+            text-transform: uppercase;
+            animation: pulse-text 1.5s infinite;
         }
 
-        .store-nav h1 span {
-            color: var(--accent);
+        @keyframes pulse-text {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
         }
 
-        .scroll-hero {
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* ═══════════════════════════════════════════════════════════════
+           UI LAYERS & SCENES
+        ═══════════════════════════════════════════════════════════════ */
+        .ui-layer { 
+            position: absolute; 
+            inset: 0; 
+            z-index: 10; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            pointer-events: none; 
+            opacity: 0; 
+            transition: opacity 1s ease; 
+        }
+
+        .ui-layer.active { 
+            opacity: 1; 
+            pointer-events: auto; 
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SCENE 1: THE GATE
+        ═══════════════════════════════════════════════════════════════ */
+        #ui-gate { 
+            perspective: 1200px; 
+        }
+
+        .gate-text-board { 
+            background: var(--glass-heavy); 
+            border: 2px solid rgba(255, 212, 0, 0.3); 
+            padding: 50px 100px; 
+            border-radius: 15px; 
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 0 50px rgba(255, 212, 0, 0.15), 
+                inset 0 0 30px rgba(108, 92, 231, 0.2);
+            text-align: center; 
+            margin-bottom: 50px; 
+            transform-style: preserve-3d;
             position: relative;
             overflow: hidden;
-            z-index: 2;
         }
 
-        .planet-float {
-            position: absolute;
-            width: 40vw;
-            max-width: 600px;
-            border-radius: 50%;
-            opacity: 0.5;
-            filter: blur(2px);
-        }
-
-        #planet-ice { top: 10%; left: -10%; }
-        #planet-rocky { bottom: -10%; right: -10%; }
-
-        .store-header {
-            text-align: center;
-            z-index: 10;
-            position: relative;
-        }
-
-        .store-header h2 {
-            font-family: var(--font-display);
-            font-size: clamp(3rem, 6vw, 6rem);
-            letter-spacing: 10px;
-            text-shadow: 0 0 50px var(--primary);
-            margin-bottom: 15px;
-        }
-
-        .store-header p {
-            color: var(--accent);
-            font-size: 1.2rem;
-            letter-spacing: 5px;
-        }
-
-        .store-content {
-            position: relative;
-            z-index: 10;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 100px 40px;
-        }
-
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 40px;
-        }
-
-        .product-card {
-            background-color: var(--glass);
-            border: 1px solid var(--border-glass);
-            border-radius: 20px;
-            overflow: hidden;
-            transition: 0.4s;
-            display: flex;
-            flex-direction: column;
-            backdrop-filter: blur(10px);
-            position: relative;
-        }
-
-        .product-card:hover {
-            transform: translateY(-15px);
-            border-color: var(--accent);
-            box-shadow: 0 30px 60px rgba(255, 107, 26, 0.2);
-        }
-
-        .product-card::before {
+        .gate-text-board::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, var(--primary), var(--accent));
-            opacity: 0;
-            transition: 0.4s;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: board-sheen 5s infinite;
         }
 
-        .product-card:hover::before {
-            opacity: 1;
+        @keyframes board-sheen {
+            0% { left: -100%; }
+            20% { left: 100%; }
+            100% { left: 100%; }
         }
 
-        .product-img-wrap {
-            width: 100%;
-            height: 350px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            background: radial-gradient(circle, rgba(108, 92, 231, 0.15) 0%, transparent 70%);
-        }
-
-        .product-img-wrap img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-            filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.9));
-            transition: transform 0.5s;
-        }
-
-        .product-card:hover .product-img-wrap img {
-            transform: scale(1.1) translateY(-10px);
-        }
-
-        .product-info {
-            padding: 30px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .product-name {
-            font-family: var(--font-display);
-            font-size: 1.4rem;
+        .gate-title { 
+            font-family: var(--font-display); 
+            font-size: clamp(3rem, 7vw, 6rem); 
+            font-weight: 900; 
+            letter-spacing: 20px; 
+            background: linear-gradient(to bottom, #fff, #ffd400); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            text-shadow: 0 0 40px rgba(255, 212, 0, 0.4); 
             margin-bottom: 10px;
         }
 
-        .product-price {
-            font-size: 1.6rem;
-            color: var(--accent);
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-
-        .buy-btn {
-            width: 100%;
-            padding: 18px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--primary), #8c7ae6);
-            border: none;
-            color: white;
-            font-weight: bold;
+        .gate-subtitle { 
             font-family: var(--font-display);
-            cursor: pointer;
-            font-size: 1rem;
+            font-size: 1rem; 
+            letter-spacing: 10px; 
+            color: var(--text-muted); 
+            font-weight: 600; 
+        }
+
+        .btn-enter { 
+            padding: 20px 80px; 
+            font-family: var(--font-display); 
+            font-size: 1.2rem; 
+            font-weight: 700; 
+            letter-spacing: 8px; 
+            color: #fff; 
+            background: rgba(108, 92, 231, 0.15); 
+            border: 1px solid var(--primary); 
+            border-radius: 8px; 
+            cursor: pointer; 
+            backdrop-filter: blur(10px); 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 0 30px rgba(108, 92, 231, 0.2); 
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-enter:hover { 
+            background: var(--primary); 
+            box-shadow: 0 0 80px var(--primary); 
+            transform: scale(1.05); 
+        }
+
+        .btn-enter::after {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
+        }
+
+        .btn-enter:hover::after {
+            width: 300px; height: 300px;
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SCENE 2: RED CARPET & LADY
+        ═══════════════════════════════════════════════════════════════ */
+        #ui-carpet { 
+            pointer-events: none; 
+        }
+
+        .speech-bubble { 
+            position: absolute; 
+            top: 15%; 
+            left: 50%; 
+            transform: translateX(-50%) scale(0); 
+            background: var(--glass); 
+            border: 1px solid var(--border-glass); 
+            backdrop-filter: blur(20px); 
+            border-radius: 20px; 
+            padding: 30px 50px; 
+            text-align: center; 
+            width: 90%; 
+            max-width: 600px; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 30px rgba(108, 92, 231, 0.2); 
+            pointer-events: auto; 
+            transform-origin: bottom center;
+        }
+
+        .speech-bubble h3 { 
+            font-family: var(--font-display); 
+            color: var(--accent); 
+            font-size: 0.85rem; 
+            margin-bottom: 12px; 
+            letter-spacing: 4px; 
+            text-transform: uppercase;
+        }
+
+        .speech-bubble p { 
+            font-family: var(--font-body);
+            font-size: 1.5rem; 
+            line-height: 1.6; 
+            font-weight: 300; 
+            color: #f0f0f0;
+        }
+        
+        .search-ui { 
+            position: absolute; 
+            bottom: 10%; 
+            left: 50%; 
+            transform: translateX(-50%) translateY(50px); 
+            width: 90%; 
+            max-width: 700px; 
+            opacity: 0; 
+            display: flex; 
+            gap: 15px; 
+            background: var(--glass); 
+            padding: 12px; 
+            border-radius: 60px; 
+            border: 1px solid var(--border-glass); 
+            backdrop-filter: blur(20px); 
+            pointer-events: auto; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        }
+
+        .search-input { 
+            flex: 1; 
+            padding: 18px 30px; 
+            border-radius: 50px; 
+            border: none; 
+            background: rgba(0,0,0,0.4); 
+            color: #fff; 
+            font-size: 1.1rem; 
+            outline: none; 
+            font-family: var(--font-ui);
+            transition: background 0.3s;
+        }
+
+        .search-input:focus {
+            background: rgba(0,0,0,0.7);
+        }
+
+        .btn-search { 
+            padding: 0 50px; 
+            border-radius: 50px; 
+            background: var(--accent); 
+            border: none; 
+            color: #fff; 
+            font-weight: 700; 
+            cursor: pointer; 
+            font-family: var(--font-display); 
+            font-size: 1rem; 
+            letter-spacing: 3px; 
+            transition: all 0.3s; 
+        }
+
+        .btn-search:hover { 
+            background: #ff8c4a; 
+            box-shadow: 0 0 40px var(--accent); 
+            transform: scale(1.02);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           SCENE 3: THE STORE (SCROLLABLE)
+        ═══════════════════════════════════════════════════════════════ */
+        #ui-store { 
+            display: block; 
+            overflow-y: auto; 
+            overflow-x: hidden; 
+            background: rgba(2, 2, 5, 0.88); 
+            backdrop-filter: blur(20px); 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: opacity 1.5s; 
+        }
+
+        #ui-store.active { 
+            opacity: 1; 
+            pointer-events: auto; 
+        }
+
+        #ui-store::-webkit-scrollbar {
+            width: 8px;
+        }
+        #ui-store::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+        }
+        #ui-store::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        .store-nav { 
+            position: sticky; 
+            top: 0; 
+            width: 100%; 
+            padding: 25px 50px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: rgba(5, 5, 10, 0.9); 
+            backdrop-filter: blur(20px); 
+            border-bottom: 1px solid rgba(108, 92, 231, 0.2); 
+            z-index: 100; 
+        }
+
+        .store-nav h1 { 
+            font-family: var(--font-display); 
+            font-size: 2rem; 
+            letter-spacing: 10px; 
+        }
+
+        .store-nav h1 span { 
+            color: var(--accent); 
+        }
+        
+        .store-header { 
+            text-align: center; 
+            margin: 120px 0 80px 0; 
+        }
+
+        .store-header h2 { 
+            font-family: var(--font-display); 
+            font-size: clamp(2.5rem, 6vw, 5rem); 
+            letter-spacing: 12px; 
+            text-shadow: 0 0 60px var(--primary); 
+            margin-bottom: 20px; 
+        }
+
+        .store-header p { 
+            color: var(--accent); 
+            font-size: 1.2rem; 
+            letter-spacing: 6px; 
+            text-transform: uppercase;
+        }
+
+        .product-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
+            gap: 50px; 
+            max-width: 1500px; 
+            margin: 0 auto; 
+            padding: 0 50px 150px 50px; 
+        }
+
+        .product-card { 
+            background: var(--glass); 
+            border: 1px solid var(--border-glass); 
+            border-radius: 24px; 
+            overflow: hidden; 
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            backdrop-filter: blur(15px); 
+            position: relative; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        .product-card:hover { 
+            transform: translateY(-20px); 
+            border-color: var(--accent); 
+            box-shadow: 0 40px 80px rgba(255, 107, 26, 0.2); 
+        }
+
+        .product-card::before { 
+            content: ''; 
+            position: absolute; 
+            top: 0; left: 0; 
+            width: 100%; height: 6px; 
+            background: linear-gradient(90deg, var(--primary), var(--accent)); 
+            opacity: 0; 
+            transition: 0.4s; 
+        }
+
+        .product-card:hover::before { 
+            opacity: 1; 
+        }
+
+        .product-img-wrap { 
+            width: 100%; 
+            height: 380px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 30px; 
+            background: radial-gradient(circle, rgba(108,92,231,0.15) 0%, transparent 70%); 
+        }
+
+        .product-img-wrap img { 
+            max-width: 100%; 
+            max-height: 100%; 
+            object-fit: contain; 
+            filter: drop-shadow(0 25px 35px rgba(0,0,0,0.9)); 
+            transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        }
+
+        .product-card:hover .product-img-wrap img { 
+            transform: scale(1.15) translateY(-15px); 
+        }
+
+        .product-info { 
+            padding: 35px; 
+            border-top: 1px solid rgba(255,255,255,0.05); 
+        }
+
+        .product-name { 
+            font-family: var(--font-display); 
+            font-size: 1.5rem; 
+            margin-bottom: 12px; 
             letter-spacing: 2px;
-            transition: 0.3s;
         }
 
-        .buy-btn:hover {
-            background: linear-gradient(135deg, #8c7ae6, var(--primary));
-            box-shadow: 0 0 30px var(--primary);
+        .product-price { 
+            font-size: 1.8rem; 
+            color: var(--accent); 
+            font-weight: 700; 
+            margin-bottom: 25px; 
         }
 
-        /* ═══════════════════════════════════════════════
-           MOBILE RESPONSIVENESS
-        ═══════════════════════════════════════════════ */
-        @media (max-width: 768px) {
-            .svg-title text { font-size: 4rem; letter-spacing: 5px; }
-            #speech-bubble { top: 15%; }
-            .store-nav { padding: 15px 20px; }
-            .store-nav h1 { font-size: 1.2rem; }
-            .planet-float { width: 80vw; }
-            .product-grid { grid-template-columns: 1fr; }
+        .buy-btn { 
+            width: 100%; 
+            padding: 20px; 
+            border-radius: 14px; 
+            background: linear-gradient(135deg, var(--primary), #8c7ae6); 
+            border: none; 
+            color: white; 
+            font-weight: 700; 
+            font-family: var(--font-display); 
+            cursor: pointer; 
+            font-size: 1.1rem; 
+            letter-spacing: 4px; 
+            transition: 0.3s; 
+        }
+
+        .buy-btn:hover { 
+            background: linear-gradient(135deg, #8c7ae6, var(--primary)); 
+            box-shadow: 0 0 40px var(--primary); 
+            transform: scale(1.02);
+        }
+
+        /* ═══════════════════════════════════════════════════════════════
+           RESPONSIVE DESIGN
+        ═══════════════════════════════════════════════════════════════ */
+        @media(max-width: 768px) {
+            .gate-text-board {
+                padding: 30px 40px;
+                width: 90%;
+            }
+            .gate-title { 
+                font-size: 2.5rem; 
+                letter-spacing: 8px; 
+            }
+            .btn-enter {
+                padding: 15px 50px;
+            }
+            .speech-bubble { 
+                top: 10%; 
+                padding: 20px 30px;
+            }
+            .speech-bubble p {
+                font-size: 1.2rem;
+            }
+            .search-ui {
+                flex-direction: column;
+                border-radius: 20px;
+                padding: 20px;
+            }
+            .btn-search {
+                padding: 18px;
+            }
+            .store-nav { 
+                padding: 15px 20px; 
+            }
+            .store-nav h1 { 
+                font-size: 1.2rem; 
+            }
+            .product-grid { 
+                grid-template-columns: 1fr; 
+                padding: 0 20px 50px 20px; 
+            }
+            .store-header { 
+                margin: 60px 0 40px 0; 
+            }
+            .product-img-wrap {
+                height: 280px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- Custom Cursor Elements -->
+    <!-- ═══════════════════════════════════════════════════════════════
+         CUSTOM CURSOR ELEMENTS
+    ═══════════════════════════════════════════════════════════════ -->
     <div id="cursor-dot"></div>
     <div id="cursor-ring"></div>
 
-    <!-- 3D Background Canvas -->
-    <div id="canvas-container"></div>
-    <div class="vignette"></div>
-
     <div id="app">
         
-        <!-- ═══════════════════════════════════════════════
-             SCENE 0: LOADER
-        ═══════════════════════════════════════════════ -->
-        <div id="scene-loader" class="scene active">
-            <svg class="svg-loader-circle">
-                <circle cx="125" cy="125" r="120" id="loader-circle"></circle>
-            </svg>
+        <!-- ═══════════════════════════════════════════════════════════════
+             THREE.JS WEBGL CANVAS
+        ═══════════════════════════════════════════════════════════════ -->
+        <canvas id="webgl-canvas"></canvas>
+        
+        <!-- VIGNETTE OVERLAY -->
+        <div class="vignette"></div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             LOADING SCREEN
+        ═══════════════════════════════════════════════════════════════ -->
+        <div id="loading-overlay">
             <img src="assets/vaastorelogo.png" class="loader-logo" alt="VAA Store Logo">
+            <div class="loader-bar-wrap">
+                <div class="loader-bar" id="loader-bar"></div>
+            </div>
+            <div class="loader-text" id="loader-text">Initializing Warp Drive</div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════════
              SCENE 1: THE GATE
-        ═══════════════════════════════════════════════ -->
-        <div id="scene-gate" class="scene">
-            <div class="gate-wrapper">
-                <div id="portal"></div>
-                <div id="gateleft" class="gate-half"></div>
-                <div id="gateright" class="gate-half"></div>
-                
-                <div class="welcome-ui" id="welcome-ui">
-                    <svg class="svg-title" viewBox="0 0 900 250">
-                        <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">VAA STORE</text>
-                    </svg>
-                    <p>Discover The Impossible</p>
-                    <button class="btn-open" onclick="openGate()">GET INSIDE</button>
-                </div>
+        ═══════════════════════════════════════════════════════════════ -->
+        <div id="ui-gate" class="ui-layer">
+            <div class="gate-text-board">
+                <div class="gate-title">VAA STORE</div>
+                <div class="gate-subtitle">THE UNIVERSE IS YOURS</div>
             </div>
+            <button class="btn-enter" onclick="VAA.startCarpetSequence()">ENTER STORE</button>
         </div>
 
-        <!-- ═══════════════════════════════════════════════
+        <!-- ═══════════════════════════════════════════════════════════════
              SCENE 2: THE RED CARPET
-        ═══════════════════════════════════════════════ -->
-        <div id="scene-carpet" class="scene">
-            <!-- Background AI Shops -->
-            <div class="bg-shop" id="shop-left"></div>
-            <div class="bg-shop" id="shop-right"></div>
-
-            <!-- Floating Characters -->
-            <img src="assets/doctor.png" class="char-sprite" id="char-doc" alt="Doctor">
-            <img src="assets/police.png" class="char-sprite" id="char-pol" alt="Police">
-            <img src="assets/buisnessman.png" class="char-sprite" id="char-biz" alt="Businessman">
-            <img src="assets/shopper1.png" class="char-sprite" id="char-shop1" alt="Shopper">
-
-            <!-- Landing Spaceship -->
-            <div id="ship-container">
-                <img src="assets/spaceship.png" id="ship-sprite" alt="Spaceship">
-            </div>
-
-            <!-- The AI Lady -->
-            <div id="lady-container">
-                <img src="assets/ladywalk1.png" id="lady-sprite" alt="VAA Guide">
-            </div>
-            
-            <!-- Dialogue UI -->
-            <div id="speech-bubble">
+        ═══════════════════════════════════════════════════════════════ -->
+        <div id="ui-carpet" class="ui-layer">
+            <div class="speech-bubble" id="speech-bubble">
                 <h3>VAA STORE GUIDE</h3>
                 <p id="speech-text">Welcome to VAA Store!</p>
             </div>
-
-            <!-- Search Interface -->
-            <div id="search-ui">
-                <input type="text" id="search-input" placeholder="What product are you looking for?" onkeypress="handleSearch(event)">
-                <button id="search-btn" onclick="triggerWarp()">SEARCH</button>
+            <div class="search-ui" id="search-ui">
+                <input type="text" class="search-input" id="search-input" placeholder="What product are you looking for?" onkeypress="VAA.handleSearch(event)">
+                <button class="btn-search" onclick="VAA.triggerWarp()">SEARCH</button>
             </div>
         </div>
 
-        <!-- ═══════════════════════════════════════════════
-             SCENE 3: WARP SPEED
-        ═══════════════════════════════════════════════ -->
-        <div id="scene-warp" class="scene">
-            <div id="warp-bg"></div>
-            <div id="warp-flash"></div>
-        </div>
-
-        <!-- ═══════════════════════════════════════════════
-             SCENE 4: PLANET STORE (SCROLL JACKED)
-        ═══════════════════════════════════════════════ -->
-        <div id="scene-store" class="scene">
+        <!-- ═══════════════════════════════════════════════════════════════
+             SCENE 3: THE STORE
+        ═══════════════════════════════════════════════════════════════ -->
+        <div id="ui-store" class="ui-layer">
             <nav class="store-nav">
                 <h1>VAA <span>STORE</span></h1>
             </nav>
-
-            <!-- Scroll-Jacked Hero Section with Planets -->
-            <div class="scroll-hero">
-                <img src="assets/ice.jpeg" class="planet-float" id="planet-ice" alt="Ice Planet">
-                <img src="assets/rocky.jpeg" class="planet-float" id="planet-rocky" alt="Rocky Planet">
-                
-                <div class="store-header">
-                    <h2 id="store-title">SECTOR ARRIVAL</h2>
-                    <p>Scroll to explore the cosmos</p>
-                </div>
+            <div class="store-header">
+                <h2 id="store-title">SECTOR ARRIVAL</h2>
+                <p>Scroll to explore the cosmos</p>
             </div>
-
-            <!-- Product Grid Container -->
-            <div class="store-content">
-                <div class="product-grid" id="product-grid"></div>
+            <div class="product-grid" id="product-grid">
+                <!-- Products injected by JS -->
             </div>
         </div>
 
+        <!-- ═══════════════════════════════════════════════════════════════
+             FLASH OVERLAY
+        ═══════════════════════════════════════════════════════════════ -->
+        <div id="flash-overlay"></div>
     </div>
 
     <script>
         // ═══════════════════════════════════════════════════════════════
-        // SUPABASE & REGISTER GSAP PLUGINS
+        // CORE GLOBAL OBJECT
         // ═══════════════════════════════════════════════════════════════
-        gsap.registerPlugin(ScrollTrigger);
-        
+        const VAA = {
+            scene: null, 
+            camera: null, 
+            renderer: null, 
+            composer: null,
+            clock: null, 
+            mouse: {x:0, y:0, tx:0, ty:0},
+            gateGroup: null, 
+            carpetGroup: null, 
+            ladyGroup: null, 
+            shipGroup: null,
+            isMobile: /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent),
+            particleCount: 3000,
+            logoParticles: null,
+            logoImageLoaded: false
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // SUPABASE CONFIGURATION
+        // ═══════════════════════════════════════════════════════════════
         const SUPABASE_URL = 'https://gynphsibkcrivosuamxp.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5bnBoc2lia2NyaXZvc3VhbXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4OTA0NzQsImV4cCI6MjEwNTQ2NjQ3NH0.GNKrZgJFj4496-kPzfdc2Fzv3bS8YO6CLrWPV4PyucM';
         const BUCKET = 'product-images';
-        
         const { createClient } = supabase;
         const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // ═══════════════════════════════════════════════════════════════
-        // CUSTOM CURSOR & MAGNETIC BUTTONS
+        // INIT THREE.JS ENGINE
         // ═══════════════════════════════════════════════════════════════
-        const cursorDot = document.getElementById('cursor-dot');
-        const cursorRing = document.getElementById('cursor-ring');
-        
-        let mouseX = 0, mouseY = 0;
-        let ringX = 0, ringY = 0;
+        VAA.init = function() {
+            const canvas = document.getElementById('webgl-canvas');
+            VAA.scene = new THREE.Scene();
+            VAA.scene.fog = new THREE.FogExp2(0x020205, 0.015);
 
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX; 
-            mouseY = e.clientY;
-            
-            gsap.to(cursorDot, { x: mouseX, y: mouseY, duration: 0.1 });
-        });
+            VAA.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            VAA.camera.position.set(0, 0, 30);
 
-        // Smooth delay for the ring
-        function renderCursor() {
-            ringX += (mouseX - ringX) * 0.15;
-            ringY += (mouseY - ringY) * 0.15;
-            gsap.set(cursorRing, { x: ringX, y: ringY });
-            requestAnimationFrame(renderCursor);
-        }
-        renderCursor();
+            VAA.renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            VAA.renderer.setSize(window.innerWidth, window.innerHeight);
+            VAA.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            VAA.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            VAA.renderer.toneMappingExposure = 1.2;
 
-        // Magnetic Buttons (Hover Effect)
-        function applyMagneticEffect(btn) {
-            btn.addEventListener('mousemove', (e) => {
-                const rect = btn.getBoundingClientRect();
-                const x = e.clientX - rect.left - rect.width / 2;
-                const y = e.clientY - rect.top - rect.height / 2;
-                
-                gsap.to(btn, { x: x * 0.3, y: y * 0.3, duration: 0.3 });
-                gsap.to(cursorRing, { scale: 1.5, borderColor: '#ff6b1a', duration: 0.2 });
-            });
-            
-            btn.addEventListener('mouseleave', () => {
-                gsap.to(btn, { x: 0, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" });
-                gsap.to(cursorRing, { scale: 1, borderColor: '#6c5ce7', duration: 0.2 });
-            });
-        }
+            VAA.clock = new THREE.Clock();
 
-        document.querySelectorAll('.btn-open, #search-btn').forEach(applyMagneticEffect);
-
-        // ═══════════════════════════════════════════════════════════════
-        // AI VOICE (WEB SPEECH API)
-        // ═══════════════════════════════════════════════════════════════
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 1;
-                utterance.pitch = 1.1;
-                
-                const voices = window.speechSynthesis.getVoices();
-                const femaleVoice = voices.find(v => v.name.includes('Female') || v.name.includes('Google UK English Female') || v.name.includes('Samantha'));
-                
-                if (femaleVoice) utterance.voice = femaleVoice;
-                window.speechSynthesis.speak(utterance);
+            // Setup Bloom Post-Processing
+            if (!VAA.isMobile) {
+                VAA.composer = new THREE.EffectComposer(VAA.renderer);
+                VAA.composer.addPass(new THREE.RenderPass(VAA.scene, VAA.camera));
+                const bloomPass = new THREE.UnrealBloomPass(
+                    new THREE.Vector2(window.innerWidth, window.innerHeight), 
+                    1.5, // strength
+                    0.4, // radius
+                    0.85 // threshold
+                );
+                VAA.composer.addPass(bloomPass);
             }
-        }
 
-        // ═══════════════════════════════════════════════════════════════
-        // THREE.JS BACKGROUND (Dense Particles)
-        // ═══════════════════════════════════════════════════════════════
-        let scene, camera, renderer, particlesDust, particlesStar, particlesGlow;
-        let tX = 0, tY = 0;
-
-        function initThreeJS() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.z = 10;
-
-            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-            const loader = new THREE.TextureLoader();
-            loader.crossOrigin = true;
+            // Lights
+            VAA.scene.add(new THREE.AmbientLight(0xffffff, 0.3));
             
-            // Dust Particles
-            loader.load('assets/dust.jpg', (texDust) => {
-                const geoDust = new THREE.BufferGeometry();
-                const verts = [];
-                for (let i = 0; i < 3000; i++) {
-                    verts.push((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60, (Math.random() - 0.5) * 60);
-                }
-                geoDust.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-                const matDust = new THREE.PointsMaterial({ size: 0.15, map: texDust, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false });
-                particlesDust = new THREE.Points(geoDust, matDust);
-                scene.add(particlesDust);
+            const keyLight = new THREE.PointLight(0x6c5ce7, 2, 100);
+            keyLight.position.set(10, 10, 20);
+            VAA.scene.add(keyLight);
+            
+            const fillLight = new THREE.PointLight(0xff6b1a, 2, 100);
+            fillLight.position.set(-10, -10, 20);
+            VAA.scene.add(fillLight);
+
+            // Window Resize
+            window.addEventListener('resize', () => {
+                VAA.camera.aspect = window.innerWidth / window.innerHeight;
+                VAA.camera.updateProjectionMatrix();
+                VAA.renderer.setSize(window.innerWidth, window.innerHeight);
+                if (VAA.composer) VAA.composer.setSize(window.innerWidth, window.innerHeight);
             });
 
-            // Star Particles
-            loader.load('assets/star.jpg', (texStar) => {
-                const geoStar = new THREE.BufferGeometry();
-                const verts = [];
-                for (let i = 0; i < 500; i++) {
-                    verts.push((Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80);
-                }
-                geoStar.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-                const matStar = new THREE.PointsMaterial({ size: 1.5, map: texStar, transparent: true, opacity: 1, blending: THREE.AdditiveBlending, depthWrite: false });
-                particlesStar = new THREE.Points(geoStar, matStar);
-                scene.add(particlesStar);
+            // Mouse Move Parallax
+            window.addEventListener('mousemove', (e) => {
+                VAA.mouse.tx = (e.clientX / window.innerWidth) * 2 - 1;
+                VAA.mouse.ty = -(e.clientY / window.innerHeight) * 2 + 1;
             });
 
-            // Glow Orbs (Using glow1.jpg)
-            loader.load('assets/glow1.jpg', (texGlow) => {
-                const geoGlow = new THREE.BufferGeometry();
-                const verts = [];
-                for (let i = 0; i < 100; i++) {
-                    verts.push((Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40, (Math.random() - 0.5) * 40);
-                }
-                geoGlow.setAttribute('position', new THREE.Float32BufferAttribute(verts, 3));
-                const matGlow = new THREE.PointsMaterial({ size: 3.0, map: texGlow, transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false });
-                particlesGlow = new THREE.Points(geoGlow, matGlow);
-                scene.add(particlesGlow);
-            });
-
-            document.addEventListener('mousemove', (e) => {
-                tX = (e.clientX - window.innerWidth / 2) * 0.001;
-                tY = (e.clientY - window.innerHeight / 2) * 0.001;
-            });
-
-            animate();
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            if(particlesDust) {
-                particlesDust.rotation.y += 0.0005;
-                particlesDust.position.x += (tX * 5 - particlesDust.position.x) * 0.02;
-                particlesDust.position.y += (-tY * 5 - particlesDust.position.y) * 0.02;
-            }
-            if(particlesStar) {
-                particlesStar.rotation.y -= 0.0002;
-                particlesStar.position.x += (tX * 10 - particlesStar.position.x) * 0.05;
-                particlesStar.position.y += (-tY * 10 - particlesStar.position.y) * 0.05;
-            }
-            if(particlesGlow) {
-                particlesGlow.rotation.y += 0.001;
-                particlesGlow.position.x += (tX * 2 - particlesGlow.position.x) * 0.01;
-                particlesGlow.position.y += (-tY * 2 - particlesGlow.position.y) * 0.01;
-            }
-            
-            renderer.render(scene, camera);
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // SCENE MANAGER
-        // ═══════════════════════════════════════════════════════════════
-        function goToScene(sceneId) {
-            document.querySelectorAll('.scene').forEach(el => el.classList.remove('active'));
-            document.getElementById(`scene-${sceneId}`).classList.add('active');
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // LOADER ANIMATION
-        // ═══════════════════════════════════════════════════════════════
-        window.addEventListener('DOMContentLoaded', () => {
-            const tl = gsap.timeline();
-            
-            // Draw SVG Circle
-            tl.to("#loader-circle", { strokeDashoffset: 0, duration: 3, ease: "power2.inOut" });
-            
-            tl.call(() => {
-                gsap.to("#scene-loader", { opacity: 0, duration: 1, onComplete: () => {
-                    document.getElementById('scene-loader').style.display = 'none';
-                    initThreeJS();
-                    goToScene('gate');
-                    startGateAnimations();
-                }});
-            });
-        });
-
-        // ═══════════════════════════════════════════════════════════════
-        // SCENE 1: GATE & SVG TEXT DRAW
-        // ═══════════════════════════════════════════════════════════════
-        function startGateAnimations() {
-            const textPath = document.querySelector('.svg-title text');
-            const length = textPath.getComputedTextLength();
-            
-            gsap.set(textPath, { strokeDasharray: length, strokeDashoffset: length });
-            
-            const tl = gsap.timeline();
-            tl.to(textPath, { strokeDashoffset: 0, duration: 3, ease: "power3.inOut" })
-              .to(textPath, { fill: '#ffffff', duration: 1, delay: 0.5 })
-              .to(".welcome-ui p", { opacity: 1, y: 0, duration: 1 }, "-=0.5")
-              .from(".btn-open", { scale: 0, opacity: 0, duration: 0.8, ease: "back.out(1.7)" }, "-=0.5");
-        }
-
-        window.openGate = function() {
-            const tl = gsap.timeline();
-            
-            tl.to("#welcome-ui", { opacity: 0, duration: 0.5, y: -50 });
-            tl.to("#gateleft", { rotateY: -120, x: -150, duration: 2.5, ease: "power3.inOut" }, "-=0.2");
-            tl.to("#gateright", { rotateY: 120, x: 150, duration: 2.5, ease: "power3.inOut" }, "<");
-            tl.to("#portal", { opacity: 1, scale: 4, duration: 2, ease: "power2.in" }, "-=2");
-            tl.to(".gate-wrapper", { scale: 8, filter: "blur(30px)", duration: 1.5, ease: "power4.in" }, "-=1");
-            
-            tl.call(() => {
-                goToScene('carpet');
-                gsap.set(".gate-wrapper", { scale: 1, filter: "none" });
-                gsap.set("#gateleft", { rotateY: 0, x: 0 });
-                gsap.set("#gateright", { rotateY: 0, x: 0 });
-                gsap.set("#portal", { opacity: 0, scale: 1 });
-                startCarpetSequence();
-            });
+            VAA.animate();
+            VAA.buildLogoAssembly();
         };
 
         // ═══════════════════════════════════════════════════════════════
-        // SCENE 2: CARPET
+        // MASTER RENDER LOOP
         // ═══════════════════════════════════════════════════════════════
-        function startCarpetSequence() {
-            const tl = gsap.timeline();
+        VAA.animate = function() {
+            requestAnimationFrame(VAA.animate);
+            const t = VAA.clock.getElapsedTime();
 
-            // Camera drop
-            gsap.set("#scene-carpet", { backgroundPosition: "50% -20%", backgroundSize: "180%" });
-            tl.to("#scene-carpet", { backgroundPosition: "50% 50%", backgroundSize: "100%", duration: 3, ease: "power3.out" });
+            // Smooth mouse
+            VAA.mouse.x += (VAA.mouse.tx - VAA.mouse.x) * 0.05;
+            VAA.mouse.y += (VAA.mouse.ty - VAA.mouse.y) * 0.05;
 
-            // Shops & Characters fade in
-            tl.to(".bg-shop", { opacity: 0.4, duration: 2 }, "-=2");
-            tl.to(".char-sprite", { opacity: 1, y: -20, duration: 2, stagger: 0.2 }, "-=1.5");
+            // Camera subtle sway
+            if (!VAA.camera.userData || !VAA.camera.userData.locked) {
+                VAA.camera.position.x += (VAA.mouse.x * 3 - VAA.camera.position.x) * 0.02;
+                VAA.camera.position.y += (VAA.mouse.y * 2 - VAA.camera.position.y) * 0.02;
+                VAA.camera.lookAt(0, 0, 0);
+            }
+
+            // Scene Animations
+            if (VAA.gateGroup) {
+                VAA.gateGroup.children.forEach(child => {
+                    if (child.userData.float) {
+                        child.position.y += Math.sin(t * 0.5 + child.userData.offset) * 0.01;
+                        child.rotation.y += 0.002;
+                    }
+                });
+            }
+            if (VAA.carpetGroup && VAA.ladyGroup) {
+                // Lady float
+                VAA.ladyGroup.position.y = -5 + Math.sin(t * 2) * 0.2;
+            }
+
+            if (VAA.composer) {
+                VAA.composer.render();
+            } else {
+                VAA.renderer.render(VAA.scene, VAA.camera);
+            }
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // SCENE 0: LOGO PARTICLE ASSEMBLY
+        // ═══════════════════════════════════════════════════════════════
+        VAA.buildLogoAssembly = function() {
+            const count = VAA.particleCount;
+            const geo = new THREE.BufferGeometry();
+            const positions = new Float32Array(count * 3);
+            const targets = new Float32Array(count * 3);
+
+            // Chaos start
+            for (let i = 0; i < count * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 100;
+                positions[i+1] = (Math.random() - 0.5) * 100;
+                positions[i+2] = (Math.random() - 0.5) * 100;
+            }
+
+            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
             
-            // Endless floating for characters
-            gsap.to(".char-sprite", { y: "+=20", duration: 4, yoyo: true, repeat: -1, ease: "sine.inOut", delay: 2 });
+            const tex = new THREE.TextureLoader().load('assets/dust.jpg');
+            const mat = new THREE.PointsMaterial({ 
+                size: 0.4, 
+                map: tex, 
+                transparent: true, 
+                blending: THREE.AdditiveBlending, 
+                color: 0xffd400,
+                depthWrite: false
+            });
+            VAA.logoParticles = new THREE.Points(geo, mat);
+            VAA.scene.add(VAA.logoParticles);
 
-            // Lady walks in from front
-            gsap.set("#lady-container", { y: "100%", scale: 2, opacity: 0 });
-            tl.to("#lady-container", { y: "0%", opacity: 1, duration: 0.1 });
-            
-            let walkFrame = 1;
-            const walkInterval = setInterval(() => {
-                walkFrame = walkFrame === 1 ? 2 : (walkFrame === 2 ? 3 : 1);
-                document.getElementById('lady-sprite').src = `assets/ladywalk${walkFrame}.png`;
-            }, 180); 
-
-            tl.to("#lady-container", { scale: 1, duration: 4, ease: "power2.out" });
-            
-            tl.call(() => {
-                clearInterval(walkInterval);
-                document.getElementById('lady-sprite').src = `assets/ladysmile.png`;
+            // Load logo and find targets
+            const img = new Image();
+            img.src = 'assets/vaastorelogo.png';
+            img.onload = () => {
+                const c = document.createElement('canvas');
+                const ctx = c.getContext('2d');
+                c.width = 250; 
+                c.height = 250;
+                ctx.drawImage(img, 0, 0, 250, 250);
+                const data = ctx.getImageData(0, 0, 250, 250).data;
+                const valid = [];
                 
+                for (let y = 0; y < 250; y += 2) {
+                    for (let x = 0; x < 250; x += 2) {
+                        if (data[(y * 250 + x) * 4 + 3] > 128) {
+                            valid.push({ x: (x - 125) * 0.4, y: -(y - 125) * 0.4 });
+                        }
+                    }
+                }
+
+                if (valid.length === 0) {
+                    console.error("Logo alpha channel not found. Make sure the logo has a transparent background.");
+                    valid.push({x:0, y:0}); // Fallback
+                }
+
+                for (let i = 0; i < count * 3; i += 3) {
+                    const p = valid[Math.floor(Math.random() * valid.length)];
+                    targets[i] = p.x + (Math.random() - 0.5) * 0.5;
+                    targets[i+1] = p.y + (Math.random() - 0.5) * 0.5;
+                    targets[i+2] = (Math.random() - 0.5) * 2;
+                }
+
+                // Animate to logo
+                gsap.to(positions, {
+                    duration: 4, 
+                    endArray: targets, 
+                    ease: "power3.inOut",
+                    onUpdate: () => { geo.attributes.position.needsUpdate = true; },
+                    onComplete: () => {
+                        // Zoom through
+                        VAA.camera.userData = { locked: true };
+                        gsap.to(VAA.camera.position, { 
+                            z: -20, 
+                            duration: 2.5, 
+                            ease: "power4.in",
+                            onComplete: () => {
+                                VAA.scene.remove(VAA.logoParticles);
+                                VAA.buildGateScene();
+                            }
+                        });
+                    }
+                });
+            };
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // SCENE 1: THE GATE
+        // ═══════════════════════════════════════════════════════════════
+        VAA.buildGateScene = function() {
+            VAA.camera.position.set(0, 0, 30);
+            VAA.gateGroup = new THREE.Group();
+            VAA.scene.add(VAA.gateGroup);
+
+            const texL = new THREE.TextureLoader().load('assets/gateleft.jpeg');
+            const texR = new THREE.TextureLoader().load('assets/gateright.jpeg');
+            
+            const gateGeo = new THREE.PlaneGeometry(30, 60);
+            const leftDoor = new THREE.Mesh(gateGeo, new THREE.MeshBasicMaterial({ map: texL }));
+            leftDoor.position.set(-15, 0, 0);
+            const rightDoor = new THREE.Mesh(gateGeo, new THREE.MeshBasicMaterial({ map: texR }));
+            rightDoor.position.set(15, 0, 0);
+            VAA.gateGroup.add(leftDoor, rightDoor);
+
+            // Particles
+            const dustTex = new THREE.TextureLoader().load('assets/dust.jpg');
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(2000 * 3);
+            for (let i = 0; i < 2000 * 3; i += 3) {
+                pos[i] = (Math.random() - 0.5) * 150;
+                pos[i+1] = (Math.random() - 0.5) * 100;
+                pos[i+2] = (Math.random() - 0.5) * 100 - 20;
+            }
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            const dust = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.5, map: dustTex, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending }));
+            dust.userData.float = true;
+            dust.userData.offset = 0;
+            VAA.gateGroup.add(dust);
+
+            document.getElementById('ui-gate').classList.add('active');
+            VAA.camera.userData = { locked: false };
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // TRANSITION: GATE TO CARPET (The Fall)
+        // ═══════════════════════════════════════════════════════════════
+        VAA.startCarpetSequence = function() {
+            // Play Audio
+            try {
+                const audio = new Audio('assets/wohh.mp4');
+                audio.play().catch(e => console.log("Audio not found or blocked"));
+            } catch (e) {
+                console.log("Audio error:", e);
+            }
+
+            document.getElementById('ui-gate').classList.remove('active');
+            VAA.camera.userData.locked = true;
+            
+            const leftDoor = VAA.gateGroup.children[0];
+            const rightDoor = VAA.gateGroup.children[1];
+
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    VAA.scene.remove(VAA.gateGroup);
+                    VAA.buildCarpetScene();
+                }
+            });
+
+            // Open doors
+            tl.to(leftDoor.position, { x: -50, z: -20, duration: 2, ease: "power3.inOut" }, 0);
+            tl.to(rightDoor.position, { x: 50, z: -20, duration: 2, ease: "power3.inOut" }, 0);
+            
+            // Camera Fall & Zoom through portal
+            tl.to(VAA.camera.position, { z: -10, y: -5, duration: 2.5, ease: "power4.in" }, 0.5);
+            tl.to(VAA.scene.fog, { density: 0.1, duration: 2 }, 0.5);
+            tl.to("#flash-overlay", { opacity: 1, duration: 0.5 }, 2.5);
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // SCENE 2: RED CARPET & LADY
+        // ═══════════════════════════════════════════════════════════════
+        VAA.buildCarpetScene = function() {
+            document.getElementById('flash-overlay').style.opacity = 0;
+            VAA.camera.position.set(0, 0, 30);
+            VAA.scene.fog.density = 0.015;
+            VAA.camera.userData.locked = false;
+
+            VAA.carpetGroup = new THREE.Group();
+            VAA.scene.add(VAA.carpetGroup);
+
+            // Carpet
+            const carpetTex = new THREE.TextureLoader().load('assets/carpet.jpeg');
+            const carpet = new THREE.Mesh(new THREE.PlaneGeometry(80, 120), new THREE.MeshBasicMaterial({ map: carpetTex }));
+            carpet.rotation.x = -Math.PI / 2.5;
+            carpet.position.set(0, -15, 0);
+            VAA.carpetGroup.add(carpet);
+
+            // Characters (Sprites)
+            const chars = ['doctor.png', 'police.png', 'buisnessman.png', 'shopper1.png'];
+            chars.forEach((char, index) => {
+                const tex = new THREE.TextureLoader().load(`assets/${char}`);
+                const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+                const x = (index - 1.5) * 15;
+                sprite.position.set(x, -5, -10);
+                sprite.scale.set(12, 16, 1);
+                VAA.carpetGroup.add(sprite);
+            });
+
+            // Lady
+            const ladyTex = new THREE.TextureLoader().load('assets/ladywalk1.png');
+            const lady = new THREE.Sprite(new THREE.SpriteMaterial({ map: ladyTex, transparent: true }));
+            lady.position.set(0, -5, 10);
+            lady.scale.set(15, 20, 1);
+            VAA.carpetGroup.add(lady);
+            VAA.ladyGroup = lady;
+
+            // Walk animation
+            let walkFrame = 1;
+            const walkInt = setInterval(() => {
+                if (!lady.userData.stopped) {
+                    walkFrame = walkFrame === 1 ? 2 : (walkFrame === 2 ? 3 : 1);
+                    lady.material.map = new THREE.TextureLoader().load(`assets/ladywalk${walkFrame}.png`);
+                    lady.material.needsUpdate = true;
+                }
+            }, 200);
+
+            setTimeout(() => {
+                clearInterval(walkInt);
+                lady.material.map = new THREE.TextureLoader().load('assets/ladysmile.png');
+                lady.material.needsUpdate = true;
+                
+                document.getElementById('ui-carpet').classList.add('active');
                 gsap.to("#speech-bubble", { scale: 1, duration: 0.8, ease: "back.out(1.7)" });
                 
-                // Text Scramble Effect for Speech
-                const finalText1 = "Welcome to VAA Store! We would be happy to host you today.";
-                scrambleText("speech-text", finalText1, 2000);
-                speak(finalText1);
+                VAA.speak("Welcome to VAA Store! We would be happy to host you today.");
+                document.getElementById('speech-text').innerText = "Welcome to VAA Store! We would be happy to host you today.";
                 
                 setTimeout(() => {
-                    const finalText2 = "What product are you looking for?";
-                    scrambleText("speech-text", finalText2, 1500);
-                    speak(finalText2);
+                    VAA.speak("What product are you looking for?");
+                    document.getElementById('speech-text').innerText = "What product are you looking for?";
                     gsap.to("#search-ui", { opacity: 1, y: 0, duration: 0.8 });
                 }, 5000);
-            });
-        }
-
-        // Text Scramble Function
-        function scrambleText(elementId, finalText, duration) {
-            const el = document.getElementById(elementId);
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ!<>-_\\/[]{}—=+*^?#________";
-            let frame = 0;
-            const totalFrames = duration / 16;
-            const queue = finalText.split('').map((char, i) => ({ 
-                to: char, 
-                start: Math.floor(Math.random() * (totalFrames * 0.5)), 
-                end: Math.floor(Math.random() * (totalFrames * 0.5)) + (totalFrames * 0.5) 
-            }));
-            
-            function update() {
-                let output = '';
-                let complete = 0;
-                
-                for (let i = 0; i < queue.length; i++) {
-                    let { to, start, end } = queue[i];
-                    if (frame >= end) { complete++; output += to; }
-                    else if (frame >= start) { output += chars[Math.floor(Math.random() * chars.length)]; }
-                    else { output += ' '; }
-                }
-                
-                el.innerHTML = output;
-                if (complete === queue.length) return;
-                frame++;
-                requestAnimationFrame(update);
-            }
-            update();
-        }
-
-        // ═══════════════════════════════════════════════════════════════
-        // SCENE 3: SEARCH & SHIP LANDING
-        // ═══════════════════════════════════════════════════════════════
-        window.handleSearch = function(e) { 
-            if (e.key === 'Enter') triggerWarp(); 
-        }
-
-        window.triggerWarp = function() {
-            const query = document.getElementById('search-input').value.trim() || "COSMIC COLLECTION";
-            
-            document.getElementById('lady-sprite').src = `assets/ladypoint.png`;
-            scrambleText("speech-text", "Ok, let's take a ride.", 1000);
-            speak("Okay, let's take a ride.");
-            
-            gsap.to("#search-ui", { opacity: 0, duration: 0.4 });
-
-            const tl = gsap.timeline({ delay: 2 });
-            
-            // Ship lands from above
-            tl.to("#ship-container", { top: "10%", duration: 1.5, ease: "bounce.out" });
-            
-            // Camera zooms into ship window
-            tl.to("#scene-carpet", { scale: 3, opacity: 0, duration: 1.5, ease: "power2.in" }, "+=0.5");
-            
-            tl.call(() => { 
-                goToScene('warp'); 
-                gsap.set("#warp-bg", { opacity: 0, scale: 1 }); 
-            });
-
-            // Warp effect
-            tl.to("#warp-bg", { opacity: 1, duration: 0.5 });
-            tl.to("#warp-bg", { scale: 3, duration: 3, ease: "power3.in" });
-            tl.to("#warp-flash", { opacity: 1, duration: 1 }, "-=1");
-            
-            tl.call(() => { loadStore(query); });
-            
-            tl.to("#warp-flash", { opacity: 0, duration: 1 });
+            }, 3000);
         };
 
         // ═══════════════════════════════════════════════════════════════
-        // SCENE 4: STORE & SCROLLTRIGGER
+        // AI VOICE
         // ═══════════════════════════════════════════════════════════════
-        async function loadStore(query) {
-            document.getElementById('store-title').innerText = `SECTOR: ${query.toUpperCase()}`;
-            const grid = document.getElementById('product-grid');
-            grid.innerHTML = '<div style="color:#ffffff; font-size:1.5rem; text-align:center; grid-column:1/-1;">Scanning Universe...</div>';
-            
-            goToScene('store');
-            document.getElementById('scene-store').scrollTop = 0;
+        VAA.speak = function(text) {
+            if ('speechSynthesis' in window) {
+                const ut = new SpeechSynthesisUtterance(text);
+                ut.rate = 1; 
+                ut.pitch = 1.1;
+                const voices = window.speechSynthesis.getVoices();
+                const female = voices.find(v => v.name.includes('Female') || v.name.includes('Google UK English Female'));
+                if (female) ut.voice = female;
+                window.speechSynthesis.speak(ut);
+            }
+        };
 
-            // ScrollTrigger for Store Planets
-            gsap.to("#planet-ice", {
-                y: -200, 
-                rotation: 45,
-                scrollTrigger: { trigger: ".scroll-hero", start: "top top", end: "bottom top", scrub: 1 }
-            });
+        // ═══════════════════════════════════════════════════════════════
+        // TRANSITION: CARPET TO SHIP
+        // ═══════════════════════════════════════════════════════════════
+        VAA.handleSearch = function(e) {
+            if (e.key === 'Enter') VAA.triggerWarp();
+        };
+
+        VAA.triggerWarp = function() {
+            const query = document.getElementById('search-input').value.trim() || "COSMIC COLLECTION";
             
-            gsap.to("#planet-rocky", {
-                y: -300, 
-                rotation: -45,
-                scrollTrigger: { trigger: ".scroll-hero", start: "top top", end: "bottom top", scrub: 1 }
+            gsap.to("#search-ui", { opacity: 0, duration: 0.4 });
+            gsap.to("#speech-bubble", { scale: 0, duration: 0.4 });
+            
+            // Girl Turn
+            VAA.ladyGroup.material.map = new THREE.TextureLoader().load('assets/girlturn.png');
+            VAA.ladyGroup.material.needsUpdate = true;
+            VAA.speak("Okay, let's take a ride.");
+
+            // Ship appears far away and flies in
+            const shipTex = new THREE.TextureLoader().load('assets/spaceship.png');
+            const ship = new THREE.Sprite(new THREE.SpriteMaterial({ map: shipTex, transparent: true }));
+            ship.position.set(0, 20, -50); // Far away
+            ship.scale.set(10, 5, 1);
+            VAA.carpetGroup.add(ship);
+
+            const tl = gsap.timeline({
+                onComplete: () => {
+                    VAA.scene.remove(VAA.carpetGroup);
+                    VAA.buildStoreScene(query);
+                }
             });
+
+            // Ship flies in
+            tl.to(ship.position, { z: 0, y: 10, scaleX: 40, scaleY: 20, duration: 2, ease: "power2.in" }, 1);
+            
+            // Camera zooms into ship window
+            tl.to(VAA.camera.position, { z: 0, y: 8, duration: 1.5, ease: "power2.in" }, 2.5);
+            tl.to(VAA.camera.rotation, { x: 0.5, duration: 1.5 }, 2.5);
+            tl.to("#flash-overlay", { opacity: 1, duration: 0.5 }, 3.5);
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // SCENE 3: STORE (3D PARTICLES + HTML GRID)
+        // ═══════════════════════════════════════════════════════════════
+        VAA.buildStoreScene = function(query) {
+            document.getElementById('flash-overlay').style.opacity = 0;
+            
+            // Setup background for store
+            const planetTex = new THREE.TextureLoader().load('assets/ice.jpeg');
+            VAA.scene.background = planetTex;
+            
+            // Add massive particle dust
+            const dustTex = new THREE.TextureLoader().load('assets/dust.jpg');
+            const geo = new THREE.BufferGeometry();
+            const pos = new Float32Array(5000 * 3);
+            for (let i = 0; i < 5000 * 3; i += 3) {
+                pos[i] = (Math.random() - 0.5) * 200;
+                pos[i+1] = (Math.random() - 0.5) * 200;
+                pos[i+2] = (Math.random() - 0.5) * 100;
+            }
+            geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            const dust = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.5, map: dustTex, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending }));
+            VAA.scene.add(dust);
+
+            document.getElementById('ui-store').classList.add('active');
+            document.getElementById('store-title').innerText = `SECTOR: ${query.toUpperCase()}`;
+            
+            VAA.loadProducts(query);
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // LOAD PRODUCTS FROM SUPABASE
+        // ═══════════════════════════════════════════════════════════════
+        VAA.loadProducts = async function(query) {
+            const grid = document.getElementById('product-grid');
+            grid.innerHTML = '<div style="color:#fff; text-align:center; grid-column:1/-1; font-family:var(--font-display); letter-spacing:5px;">SCANNING UNIVERSE...</div>';
 
             try {
                 let dbQuery = db.from('products').select('*, categories(name)');
-                if (query !== "COSMIC COLLECTION") { 
-                    dbQuery = dbQuery.ilike('name', `%${query}%`); 
+                if (query !== "COSMIC COLLECTION") {
+                    dbQuery = dbQuery.ilike('name', `%${query}%`);
                 }
 
                 const { data, error } = await dbQuery;
@@ -1189,7 +1167,7 @@
 
                 grid.innerHTML = '';
                 if (data.length === 0) {
-                    grid.innerHTML = '<h2 style="color:#ff6b1a; text-align:center; grid-column:1/-1;">No items found in this sector.</h2>';
+                    grid.innerHTML = '<h2 style="color:#ff6b1a; text-align:center; grid-column:1/-1; font-family:var(--font-display);">NO ITEMS FOUND IN THIS SECTOR.</h2>';
                     return;
                 }
 
@@ -1201,7 +1179,7 @@
                     card.className = 'product-card';
                     card.innerHTML = `
                         <div class="product-img-wrap">
-                            <img src="${imgUrl}">
+                            <img src="${imgUrl}" alt="${product.name}">
                         </div>
                         <div class="product-info">
                             <div class="product-name">${product.name}</div>
@@ -1211,25 +1189,70 @@
                     `;
                     grid.appendChild(card);
                     
-                    // Add magnetic hover to dynamically created buttons
-                    const btn = card.querySelector('.buy-btn');
-                    applyMagneticEffect(btn);
-
-                    gsap.from(card, { 
-                        opacity: 0, 
-                        y: 100, 
-                        rotationX: -20, 
-                        duration: 1, 
-                        delay: index * 0.1, 
-                        ease: "power3.out",
-                        scrollTrigger: { trigger: card, start: "top bottom-=50px" }
-                    });
+                    gsap.from(card, { opacity: 0, y: 50, duration: 0.8, delay: index * 0.1, ease: "power2.out" });
                 });
 
             } catch (err) {
-                grid.innerHTML = '<h2 style="color:red; text-align:center; grid-column:1/-1;">System Error.</h2>';
+                console.error(err);
+                grid.innerHTML = '<h2 style="color:red; text-align:center; grid-column:1/-1; font-family:var(--font-display);">SYSTEM ERROR.</h2>';
             }
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // CUSTOM CURSOR & MAGNETIC BUTTONS
+        // ═══════════════════════════════════════════════════════════════
+        const cursorDot = document.getElementById('cursor-dot');
+        const cursorRing = document.getElementById('cursor-ring');
+        let mx = 0, my = 0, rx = 0, ry = 0;
+
+        document.addEventListener('mousemove', (e) => {
+            mx = e.clientX; my = e.clientY;
+            gsap.to(cursorDot, { x: mx, y: my, duration: 0.1 });
+        });
+
+        function renderCursor() {
+            rx += (mx - rx) * 0.15;
+            ry += (my - ry) * 0.15;
+            gsap.set(cursorRing, { x: rx, y: ry });
+            requestAnimationFrame(renderCursor);
         }
+        renderCursor();
+
+        // Magnetic Buttons logic (optional enhancement)
+        document.querySelectorAll('.btn-enter, .btn-search, .buy-btn').forEach(btn => {
+            btn.addEventListener('mousemove', (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                gsap.to(btn, { x: x * 0.2, y: y * 0.2, duration: 0.3 });
+            });
+            btn.addEventListener('mouseleave', () => {
+                gsap.to(btn, { x: 0, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" });
+            });
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // BOOT UP
+        // ═══════════════════════════════════════════════════════════════
+        window.onload = () => {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                document.getElementById('loader-bar').style.width = `${progress}%`;
+
+                if (progress === 100) {
+                    document.getElementById('loader-text').innerText = "SYSTEMS ONLINE";
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        gsap.to("#loading-overlay", { opacity: 0, duration: 1.5, onComplete: () => {
+                            document.getElementById('loading-overlay').style.display = 'none';
+                            VAA.init();
+                        }});
+                    }, 800);
+                }
+            }, 250);
+        };
     </script>
 </body>
 </html>
