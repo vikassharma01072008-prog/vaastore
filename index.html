@@ -8,302 +8,199 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --gold: #d4af37;
-    --gold-soft: #f0d98c;
-    --green: #7dffb0;
-    --purple: #b06cff;
-    --ice: #9fe0ff;
-    --bg: #050508;
-    --text: #eef1f7;
-    --muted: #8a93a6;
+  :root{
+    --gold:#d4af37;--gold-soft:#f0d98c;--green:#7dffb0;--purple:#b06cff;--ice:#9fe0ff;
+    --bg:#050508;--text:#eef1f7;--muted:#8a93a6;
   }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    width: 100%; height: 100%;
-    background: var(--bg); color: var(--text);
-    font-family: 'Rajdhani', sans-serif;
-    overflow: hidden; overscroll-behavior: none;
-  }
-  body { -webkit-font-smoothing: antialiased; }
-  canvas { display: block; }
-  #webgl {
-    position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1;
-    background: radial-gradient(ellipse at center, #0a0a18 0%, #030308 70%, #000 100%);
-  }
-  #loader {
-    position: fixed; inset: 0; z-index: 100;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 28px;
-    background: radial-gradient(ellipse at center, #0a0a18 0%, #030308 70%, #000 100%);
-    transition: opacity 0.9s ease;
-  }
-  #loader.fade-out { opacity: 0; pointer-events: none; }
-  #loader .logo-wrap {
-    position: relative; width: min(340px, 62vw); aspect-ratio: 1 / 1;
-    display: flex; align-items: center; justify-content: center;
-  }
-  #loader .logo-wrap img {
-    width: 100%; height: 100%; object-fit: contain;
-    mix-blend-mode: screen;
-    filter: drop-shadow(0 0 24px rgba(212,175,55,0.55)) drop-shadow(0 0 60px rgba(176,108,255,0.25));
-    animation: logoPulse 2.6s ease-in-out infinite;
-  }
-  @keyframes logoPulse {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.04); }
-  }
-  #loader .brand {
-    font-family: 'Cinzel', serif; font-weight: 700;
-    letter-spacing: 0.55em; font-size: clamp(14px, 2vw, 20px);
-    color: var(--gold-soft); text-indent: 0.55em;
-    text-shadow: 0 0 18px rgba(212,175,55,0.6);
-  }
-  #loader .bar-track {
-    width: min(360px, 70vw); height: 3px;
-    background: rgba(212,175,55,0.15); border-radius: 3px;
-    overflow: hidden; position: relative;
-  }
-  #loader .bar-fill {
-    position: absolute; inset: 0; width: 0%;
-    background: linear-gradient(90deg, var(--purple), var(--gold), var(--green));
-    box-shadow: 0 0 16px rgba(212,175,55,0.8);
-    transition: width 0.3s ease;
-  }
-  #loader .status {
-    font-family: 'Orbitron', sans-serif; font-size: 10px;
-    letter-spacing: 0.35em; color: var(--muted); text-transform: uppercase;
-  }
-  #scene-gate {
-    position: fixed; inset: 0; z-index: 20;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 34px; pointer-events: none; opacity: 0;
-    transition: opacity 1.2s ease;
-  }
-  #scene-gate.active { opacity: 1; pointer-events: auto; }
-  #scene-gate .gate-title {
-    font-family: 'Cinzel', serif; font-weight: 900;
-    font-size: clamp(34px, 7vw, 92px);
-    letter-spacing: 0.22em; text-indent: 0.22em; color: #fff;
-    text-shadow: 0 0 20px rgba(212,175,55,0.9), 0 0 60px rgba(212,175,55,0.5), 0 0 120px rgba(176,108,255,0.4);
-    padding: 22px 46px;
-    border: 1px solid rgba(212,175,55,0.55);
-    border-radius: 6px;
-    background: rgba(5,6,14,0.35);
-    backdrop-filter: blur(6px);
-    box-shadow: inset 0 0 40px rgba(212,175,55,0.12), 0 0 60px rgba(212,175,55,0.25);
-    text-align: center; line-height: 1;
-  }
-  #scene-gate .gate-sub {
-    font-family: 'Orbitron', sans-serif; font-size: clamp(9px, 1.2vw, 12px);
-    letter-spacing: 0.6em; color: var(--gold-soft); opacity: 0.8; text-transform: uppercase;
-  }
-  #enter-btn {
-    pointer-events: auto; cursor: pointer; position: relative;
-    font-family: 'Orbitron', sans-serif; font-weight: 700;
-    font-size: clamp(12px, 1.4vw, 15px);
-    letter-spacing: 0.45em; text-indent: 0.45em;
-    color: #0a0a12;
-    background: linear-gradient(135deg, var(--gold-soft), var(--gold));
-    border: none; padding: 20px 54px; border-radius: 4px;
-    box-shadow: 0 0 30px rgba(212,175,55,0.65), 0 0 90px rgba(212,175,55,0.35), inset 0 0 20px rgba(255,255,255,0.35);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    overflow: hidden;
-  }
-  #enter-btn::after {
-    content: ''; position: absolute;
-    top: 0; left: -60%; width: 40%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
-    transform: skewX(-20deg);
-    animation: btnShine 2.6s ease-in-out infinite;
-  }
-  @keyframes btnShine {
-    0% { left: -60%; } 55% { left: 130%; } 100% { left: 130%; }
-  }
-  #enter-btn:hover {
-    transform: translateY(-2px) scale(1.03);
-    box-shadow: 0 0 44px rgba(212,175,55,0.9), 0 0 130px rgba(212,175,55,0.55), inset 0 0 24px rgba(255,255,255,0.5);
-  }
-  #scene-carpet {
-    position: fixed; inset: 0; z-index: 15;
-    pointer-events: none; opacity: 0; transition: opacity 1s ease;
-  }
-  #scene-carpet.active { opacity: 1; }
-  #speech-bubble {
-    position: fixed; bottom: 22%; left: 50%;
-    transform: translate(-50%, 20px) scale(0.92);
-    max-width: min(560px, 84vw);
-    padding: 22px 30px;
-    background: linear-gradient(160deg, rgba(14,16,28,0.94), rgba(8,9,18,0.94));
-    border: 1px solid rgba(212,175,55,0.55);
-    border-radius: 14px;
-    font-family: 'Rajdhani', sans-serif; font-weight: 500;
-    font-size: clamp(15px, 1.7vw, 19px);
-    line-height: 1.5; color: #f4f6fb;
-    box-shadow: 0 0 30px rgba(212,175,55,0.28), 0 0 80px rgba(176,108,255,0.18), inset 0 0 24px rgba(212,175,55,0.06);
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2,0.9,0.3,1.2);
-    z-index: 40;
-  }
-  #speech-bubble.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
-  #speech-bubble::after {
-    content: ''; position: absolute;
-    bottom: -11px; left: 50%;
-    transform: translateX(-50%) rotate(45deg);
-    width: 20px; height: 20px;
-    background: rgba(14,16,28,0.94);
-    border-right: 1px solid rgba(212,175,55,0.55);
-    border-bottom: 1px solid rgba(212,175,55,0.55);
-  }
-  #search-ui {
-    position: fixed; bottom: 8%; left: 50%;
-    transform: translate(-50%, 30px);
-    width: min(620px, 88vw);
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 10px 10px 22px;
-    background: rgba(10, 12, 22, 0.82);
-    border: 1px solid rgba(212,175,55,0.45);
-    border-radius: 60px;
-    backdrop-filter: blur(14px);
-    box-shadow: 0 0 30px rgba(212,175,55,0.22), 0 0 80px rgba(176,108,255,0.15), inset 0 0 24px rgba(212,175,55,0.05);
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2,0.9,0.3,1.1);
-    z-index: 35;
-  }
-  #search-ui.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
-  #search-ui .search-icon { width: 20px; height: 20px; flex-shrink: 0; opacity: 0.75; color: var(--gold-soft); }
-  #search-input {
-    flex: 1; background: transparent; border: none; outline: none;
-    color: #fff; font-family: 'Rajdhani', sans-serif; font-weight: 500;
-    font-size: 17px; letter-spacing: 0.04em; padding: 12px 0;
-  }
-  #search-input::placeholder { color: rgba(200, 206, 220, 0.5); }
-  #search-go {
-    flex-shrink: 0; cursor: pointer;
-    background: linear-gradient(135deg, var(--gold-soft), var(--gold));
-    border: none; color: #0a0a12;
-    font-family: 'Orbitron', sans-serif; font-weight: 700;
-    font-size: 11px; letter-spacing: 0.3em; text-indent: 0.3em;
-    padding: 14px 28px; border-radius: 40px;
-    box-shadow: 0 0 20px rgba(212,175,55,0.55);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  #search-go:hover { transform: scale(1.04); box-shadow: 0 0 32px rgba(212,175,55,0.85); }
-  #scene-warp-overlay {
-    position: fixed; inset: 0; z-index: 18;
-    pointer-events: none; opacity: 0;
-    transition: opacity 0.8s ease;
-    background: radial-gradient(ellipse at center, transparent 40%, rgba(3,4,10,0.85) 100%);
-  }
-  #scene-warp-overlay.active { opacity: 1; }
-  #scene-warp-overlay::after {
-    content: ''; position: absolute; inset: 0;
-    background: repeating-linear-gradient(0deg, rgba(159, 224, 255, 0.03) 0px, rgba(159, 224, 255, 0.03) 1px, transparent 1px, transparent 3px);
-    mix-blend-mode: screen; opacity: 0.6;
-  }
-  #scene-store {
-    position: fixed; inset: 0; z-index: 25;
-    display: flex; flex-direction: column;
-    opacity: 0; pointer-events: none;
-    transition: opacity 1s ease;
-    overflow-y: auto; overflow-x: hidden;
-    padding: 60px 5vw 80px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(212,175,55,0.5) transparent;
-  }
-  #scene-store.active { opacity: 1; pointer-events: auto; }
-  #scene-store::-webkit-scrollbar { width: 8px; }
-  #scene-store::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.5); border-radius: 8px; }
-  #scene-store .store-head { text-align: center; margin-bottom: 48px; flex-shrink: 0; }
-  #scene-store .store-head h2 {
-    font-family: 'Cinzel', serif; font-weight: 700;
-    font-size: clamp(28px, 4.4vw, 54px);
-    letter-spacing: 0.18em; text-indent: 0.18em; color: #fff;
-    text-shadow: 0 0 24px rgba(159,224,255,0.7), 0 0 70px rgba(212,175,55,0.35);
-    margin-bottom: 12px;
-  }
-  #scene-store .store-head p {
-    font-family: 'Orbitron', sans-serif; font-size: 11px;
-    letter-spacing: 0.5em; text-indent: 0.5em;
-    color: var(--ice); opacity: 0.8; text-transform: uppercase;
-  }
-  #product-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 26px;
-    max-width: 1400px; width: 100%; margin: 0 auto; flex-shrink: 0;
-  }
-  .product-card {
-    position: relative;
-    background: linear-gradient(160deg, rgba(14,18,32,0.78), rgba(6,8,16,0.86));
-    border: 1px solid rgba(159,224,255,0.22);
-    border-radius: 14px; overflow: hidden;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 0 24px rgba(159,224,255,0.08), inset 0 0 24px rgba(159,224,255,0.03);
-    transition: transform 0.35s cubic-bezier(0.2,0.9,0.3,1.1), border-color 0.35s ease, box-shadow 0.35s ease;
-    opacity: 0; transform: translateY(28px);
-    animation: cardRise 0.7s cubic-bezier(0.2,0.9,0.3,1.1) forwards;
-  }
-  @keyframes cardRise { to { opacity: 1; transform: translateY(0); } }
-  .product-card:hover {
-    transform: translateY(-6px);
-    border-color: rgba(212,175,55,0.65);
-    box-shadow: 0 0 40px rgba(212,175,55,0.35), 0 0 90px rgba(159,224,255,0.15), inset 0 0 30px rgba(212,175,55,0.05);
-  }
-  .product-card .card-img-wrap {
-    position: relative; width: 100%; aspect-ratio: 4 / 5; overflow: hidden;
-    background: radial-gradient(ellipse at center, #10141f, #05060c);
-  }
-  .product-card .card-img-wrap img {
-    width: 100%; height: 100%; object-fit: cover;
-    transition: transform 0.7s cubic-bezier(0.2,0.9,0.3,1.1);
-  }
-  .product-card:hover .card-img-wrap img { transform: scale(1.08); }
-  .product-card .card-body { padding: 18px 20px 22px; }
-  .product-card .card-name {
-    font-family: 'Cinzel', serif; font-weight: 600;
-    font-size: 17px; letter-spacing: 0.06em;
-    color: #fff; margin-bottom: 8px; line-height: 1.25;
-  }
-  .product-card .card-desc {
-    font-family: 'Rajdhani', sans-serif; font-size: 13px;
-    font-weight: 400; line-height: 1.45; color: var(--muted);
-    margin-bottom: 14px;
-    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-  }
-  .product-card .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .product-card .card-price {
-    font-family: 'Orbitron', sans-serif; font-weight: 700;
-    font-size: 16px; letter-spacing: 0.05em;
-    color: var(--gold-soft); text-shadow: 0 0 12px rgba(212,175,55,0.6);
-  }
-  .product-card .card-sizes { display: flex; gap: 4px; flex-wrap: wrap; }
-  .product-card .card-sizes span {
-    font-family: 'Orbitron', sans-serif; font-size: 9px;
-    letter-spacing: 0.08em; color: var(--ice);
-    border: 1px solid rgba(159,224,255,0.35);
-    border-radius: 4px; padding: 2px 6px; opacity: 0.85;
-  }
-  #store-loading {
-    width: 100%; text-align: center; padding: 60px 0;
-    font-family: 'Orbitron', sans-serif; font-size: 12px;
-    letter-spacing: 0.4em; color: var(--ice);
-    text-transform: uppercase; opacity: 0.8;
-  }
-  #store-loading.hidden { display: none; }
-  #flash {
-    position: fixed; inset: 0; z-index: 90;
-    background: #fff; opacity: 0; pointer-events: none;
-    transition: opacity 0.15s ease;
-  }
-  #flash.on { opacity: 1; }
-  #fade {
-    position: fixed; inset: 0; z-index: 80;
-    background: #000; opacity: 1; pointer-events: none;
-    transition: opacity 1s ease;
-  }
-  #fade.clear { opacity: 0; }
-  .hidden { display: none !important; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;height:100%;background:var(--bg);color:var(--text);
+    font-family:'Rajdhani',sans-serif;overflow:hidden;overscroll-behavior:none}
+  body{-webkit-font-smoothing:antialiased}
+  canvas{display:block}
+  #webgl{position:fixed;inset:0;width:100%;height:100%;z-index:1;
+    background:radial-gradient(ellipse at center,#0a0a18 0%,#030308 70%,#000 100%)}
+
+  /* ---------- LOADER ---------- */
+  #loader{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:26px;
+    background:radial-gradient(ellipse at center,#0a0a18 0%,#030308 70%,#000 100%);
+    transition:opacity .9s ease}
+  #loader.fade-out{opacity:0;pointer-events:none}
+  #loader .logo-wrap{position:relative;width:min(320px,60vw);aspect-ratio:1/1;
+    display:flex;align-items:center;justify-content:center}
+  #loader .logo-wrap img{width:100%;height:100%;object-fit:contain;
+    mix-blend-mode:screen;
+    filter:drop-shadow(0 0 24px rgba(212,175,55,.55)) drop-shadow(0 0 60px rgba(176,108,255,.25));
+    animation:logoPulse 2.6s ease-in-out infinite}
+  @keyframes logoPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+  #loader .brand{font-family:'Cinzel',serif;font-weight:700;letter-spacing:.55em;
+    font-size:clamp(14px,2vw,20px);color:var(--gold-soft);text-indent:.55em;
+    text-shadow:0 0 18px rgba(212,175,55,.6)}
+  #loader .bar-track{width:min(360px,70vw);height:3px;background:rgba(212,175,55,.15);
+    border-radius:3px;overflow:hidden;position:relative}
+  #loader .bar-fill{position:absolute;inset:0;width:0%;
+    background:linear-gradient(90deg,var(--purple),var(--gold),var(--green));
+    box-shadow:0 0 16px rgba(212,175,55,.8);transition:width .3s ease}
+  #loader .status{font-family:'Orbitron',sans-serif;font-size:10px;
+    letter-spacing:.35em;color:var(--muted);text-transform:uppercase}
+
+  /* ---------- GATE OVERLAY ---------- */
+  #scene-gate{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:24px;pointer-events:none;opacity:0;
+    transition:opacity 1.2s ease}
+  #scene-gate.active{opacity:1;pointer-events:auto}
+  #scene-gate .brand-logo{width:clamp(90px,13vw,150px);height:auto;mix-blend-mode:screen;
+    filter:drop-shadow(0 0 26px rgba(212,175,55,.75)) drop-shadow(0 0 60px rgba(176,108,255,.4));
+    animation:floatY 3.4s ease-in-out infinite}
+  @keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  #scene-gate .gate-title{font-family:'Cinzel',serif;font-weight:900;
+    font-size:clamp(34px,7vw,92px);letter-spacing:.22em;text-indent:.22em;
+    background:linear-gradient(180deg,#fff 0%,var(--gold-soft) 45%,var(--gold) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 30px rgba(212,175,55,.35),0 0 80px rgba(176,108,255,.2);
+    padding:14px 44px;border-top:1px solid rgba(212,175,55,.55);
+    border-bottom:1px solid rgba(212,175,55,.55);text-align:center;line-height:1;
+    position:relative}
+  #scene-gate .gate-title::before,#scene-gate .gate-title::after{
+    content:'';position:absolute;top:50%;width:60px;height:1px;
+    background:linear-gradient(90deg,transparent,var(--gold));transform:translateY(-50%)}
+  #scene-gate .gate-title::before{right:100%;margin-right:18px}
+  #scene-gate .gate-title::after{left:100%;margin-left:18px;transform:translateY(-50%) scaleX(-1)}
+  #scene-gate .gate-sub{font-family:'Orbitron',sans-serif;font-size:clamp(9px,1.2vw,12px);
+    letter-spacing:.6em;color:var(--gold-soft);opacity:.8;text-transform:uppercase}
+  #enter-btn{pointer-events:auto;cursor:pointer;position:relative;
+    font-family:'Orbitron',sans-serif;font-weight:700;font-size:clamp(12px,1.4vw,15px);
+    letter-spacing:.45em;text-indent:.45em;color:#0a0a12;
+    background:linear-gradient(135deg,var(--gold-soft),var(--gold));
+    border:none;padding:20px 54px;border-radius:4px;
+    box-shadow:0 0 30px rgba(212,175,55,.65),0 0 90px rgba(212,175,55,.35),
+      inset 0 0 20px rgba(255,255,255,.35);
+    transition:transform .25s ease,box-shadow .25s ease;overflow:hidden}
+  #enter-btn::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);
+    transform:skewX(-20deg);animation:btnShine 2.6s ease-in-out infinite}
+  @keyframes btnShine{0%{left:-60%}55%{left:130%}100%{left:130%}}
+  #enter-btn:hover{transform:translateY(-2px) scale(1.03);
+    box-shadow:0 0 44px rgba(212,175,55,.9),0 0 130px rgba(212,175,55,.55),
+      inset 0 0 24px rgba(255,255,255,.5)}
+
+  /* ---------- CARPET OVERLAY ---------- */
+  #scene-carpet{position:fixed;inset:0;z-index:15;pointer-events:none;opacity:0;
+    transition:opacity 1s ease}
+  #scene-carpet.active{opacity:1}
+  #speech-bubble{position:fixed;bottom:22%;left:50%;
+    transform:translate(-50%,20px) scale(.92);max-width:min(560px,84vw);
+    padding:22px 30px;
+    background:linear-gradient(160deg,rgba(14,16,28,.94),rgba(8,9,18,.94));
+    border:1px solid rgba(212,175,55,.55);border-radius:14px;
+    font-family:'Rajdhani',sans-serif;font-weight:500;
+    font-size:clamp(15px,1.7vw,19px);line-height:1.5;color:#f4f6fb;letter-spacing:.02em;
+    box-shadow:0 0 30px rgba(212,175,55,.28),0 0 80px rgba(176,108,255,.18),
+      inset 0 0 24px rgba(212,175,55,.06);
+    opacity:0;pointer-events:none;
+    transition:opacity .5s ease,transform .5s cubic-bezier(.2,.9,.3,1.2);z-index:40}
+  #speech-bubble.show{opacity:1;transform:translate(-50%,0) scale(1)}
+  #speech-bubble::after{content:'';position:absolute;bottom:-11px;left:50%;
+    transform:translateX(-50%) rotate(45deg);width:20px;height:20px;
+    background:rgba(14,16,28,.94);
+    border-right:1px solid rgba(212,175,55,.55);
+    border-bottom:1px solid rgba(212,175,55,.55)}
+  #search-ui{position:fixed;bottom:8%;left:50%;transform:translate(-50%,30px);
+    width:min(620px,88vw);display:flex;align-items:center;gap:12px;
+    padding:10px 10px 10px 22px;background:rgba(10,12,22,.82);
+    border:1px solid rgba(212,175,55,.45);border-radius:60px;backdrop-filter:blur(14px);
+    box-shadow:0 0 30px rgba(212,175,55,.22),0 0 80px rgba(176,108,255,.15),
+      inset 0 0 24px rgba(212,175,55,.05);
+    opacity:0;pointer-events:none;
+    transition:opacity .7s ease,transform .7s cubic-bezier(.2,.9,.3,1.1);z-index:35}
+  #search-ui.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+  #search-ui .search-icon{width:20px;height:20px;flex-shrink:0;opacity:.75;color:var(--gold-soft)}
+  #search-input{flex:1;background:transparent;border:none;outline:none;color:#fff;
+    font-family:'Rajdhani',sans-serif;font-weight:500;font-size:17px;
+    letter-spacing:.04em;padding:12px 0}
+  #search-input::placeholder{color:rgba(200,206,220,.5)}
+  #search-go{flex-shrink:0;cursor:pointer;
+    background:linear-gradient(135deg,var(--gold-soft),var(--gold));border:none;color:#0a0a12;
+    font-family:'Orbitron',sans-serif;font-weight:700;font-size:11px;
+    letter-spacing:.3em;text-indent:.3em;padding:14px 28px;border-radius:40px;
+    box-shadow:0 0 20px rgba(212,175,55,.55);
+    transition:transform .2s ease,box-shadow .2s ease}
+  #search-go:hover{transform:scale(1.04);box-shadow:0 0 32px rgba(212,175,55,.85)}
+
+  /* ---------- WARP OVERLAY ---------- */
+  #scene-warp-overlay{position:fixed;inset:0;z-index:18;pointer-events:none;opacity:0;
+    transition:opacity .8s ease;
+    background:radial-gradient(ellipse at center,transparent 40%,rgba(3,4,10,.85) 100%)}
+  #scene-warp-overlay.active{opacity:1}
+  #scene-warp-overlay::after{content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(0deg,rgba(159,224,255,.03) 0px,
+      rgba(159,224,255,.03) 1px,transparent 1px,transparent 3px);
+    mix-blend-mode:screen;opacity:.6}
+
+  /* ---------- STORE OVERLAY ---------- */
+  #scene-store{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;
+    opacity:0;pointer-events:none;transition:opacity 1s ease;
+    overflow-y:auto;overflow-x:hidden;padding:60px 5vw 80px;
+    scrollbar-width:thin;scrollbar-color:rgba(212,175,55,.5) transparent}
+  #scene-store.active{opacity:1;pointer-events:auto}
+  #scene-store::-webkit-scrollbar{width:8px}
+  #scene-store::-webkit-scrollbar-thumb{background:rgba(212,175,55,.5);border-radius:8px}
+  #scene-store .store-head{text-align:center;margin-bottom:48px;flex-shrink:0}
+  #scene-store .store-head h2{font-family:'Cinzel',serif;font-weight:700;
+    font-size:clamp(28px,4.4vw,54px);letter-spacing:.18em;text-indent:.18em;color:#fff;
+    text-shadow:0 0 24px rgba(159,224,255,.7),0 0 70px rgba(212,175,55,.35);
+    margin-bottom:12px}
+  #scene-store .store-head p{font-family:'Orbitron',sans-serif;font-size:11px;
+    letter-spacing:.5em;text-indent:.5em;color:var(--ice);opacity:.8;text-transform:uppercase}
+
+  /* ---------- PRODUCT GRID ---------- */
+  #product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+    gap:26px;max-width:1400px;width:100%;margin:0 auto;flex-shrink:0}
+  .product-card{position:relative;
+    background:linear-gradient(160deg,rgba(14,18,32,.78),rgba(6,8,16,.86));
+    border:1px solid rgba(159,224,255,.22);border-radius:14px;overflow:hidden;
+    backdrop-filter:blur(10px);
+    box-shadow:0 0 24px rgba(159,224,255,.08),inset 0 0 24px rgba(159,224,255,.03);
+    transition:transform .35s cubic-bezier(.2,.9,.3,1.1),border-color .35s ease,
+      box-shadow .35s ease;
+    opacity:0;transform:translateY(28px);
+    animation:cardRise .7s cubic-bezier(.2,.9,.3,1.1) forwards}
+  @keyframes cardRise{to{opacity:1;transform:translateY(0)}}
+  .product-card:hover{transform:translateY(-6px);border-color:rgba(212,175,55,.65);
+    box-shadow:0 0 40px rgba(212,175,55,.35),0 0 90px rgba(159,224,255,.15),
+      inset 0 0 30px rgba(212,175,55,.05)}
+  .product-card .card-img-wrap{position:relative;width:100%;aspect-ratio:4/5;
+    overflow:hidden;background:radial-gradient(ellipse at center,#10141f,#05060c)}
+  .product-card .card-img-wrap img{width:100%;height:100%;object-fit:cover;
+    transition:transform .7s cubic-bezier(.2,.9,.3,1.1)}
+  .product-card:hover .card-img-wrap img{transform:scale(1.08)}
+  .product-card .card-body{padding:18px 20px 22px}
+  .product-card .card-name{font-family:'Cinzel',serif;font-weight:600;font-size:17px;
+    letter-spacing:.06em;color:#fff;margin-bottom:8px;line-height:1.25}
+  .product-card .card-desc{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:400;
+    line-height:1.45;color:var(--muted);margin-bottom:14px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .product-card .card-foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .product-card .card-price{font-family:'Orbitron',sans-serif;font-weight:700;font-size:16px;
+    letter-spacing:.05em;color:var(--gold-soft);text-shadow:0 0 12px rgba(212,175,55,.6)}
+  .product-card .card-price::before{content:'$';font-size:11px;margin-right:2px;opacity:.8}
+  .product-card .card-sizes{display:flex;gap:4px;flex-wrap:wrap}
+  .product-card .card-sizes span{font-family:'Orbitron',sans-serif;font-size:9px;
+    letter-spacing:.08em;color:var(--ice);border:1px solid rgba(159,224,255,.35);
+    border-radius:4px;padding:2px 6px;opacity:.85}
+  #store-loading{width:100%;text-align:center;padding:60px 0;
+    font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:.4em;
+    color:var(--ice);text-transform:uppercase;opacity:.8}
+  #store-loading.hidden{display:none}
+
+  /* ---------- TRANSITIONS ---------- */
+  #flash{position:fixed;inset:0;z-index:90;background:#fff;opacity:0;
+    pointer-events:none;transition:opacity .15s ease}
+  #flash.on{opacity:1}
+  #fade{position:fixed;inset:0;z-index:80;background:#000;opacity:1;
+    pointer-events:none;transition:opacity 1s ease}
+  #fade.clear{opacity:0}
+  .hidden{display:none !important}
 </style>
 </head>
 <body>
@@ -320,6 +217,7 @@
 </div>
 
 <div id="scene-gate">
+  <img class="brand-logo" src="assets/vaastorelogo.png" alt="" />
   <div class="gate-title">VAA STORE</div>
   <div class="gate-sub">Beyond the gate lies everything</div>
   <button id="enter-btn">ENTER STORE</button>
@@ -328,11 +226,13 @@
 <div id="scene-carpet">
   <div id="speech-bubble"></div>
   <div id="search-ui">
-    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <circle cx="11" cy="11" r="7"></circle>
       <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
     </svg>
-    <input id="search-input" type="text" placeholder="What product are you looking for?" autocomplete="off" spellcheck="false" />
+    <input id="search-input" type="text" placeholder="What product are you looking for?"
+      autocomplete="off" spellcheck="false" />
     <button id="search-go">GO</button>
   </div>
 </div>
@@ -362,9 +262,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>/* ============================================================
-   VAA STORE — PART 2
-   Config, Three.js core, composer/bloom, Scene 0 (particle logo),
-   Scene 1 (gate + portal + flash)
+   VAA STORE — FULL REMAKE
+   Chunk 2: config, core, Scene 0 (logo particles), Scene 1 (gate)
    ============================================================ */
 
 const SUPABASE_URL = 'https://gynphsibkcrivosuamxp.supabase.co';
@@ -381,8 +280,6 @@ const ASSETS = {
   dust:      'assets/dust.jpg',
   star:      'assets/star.jpg',
   noise:     'assets/noise.jpg',
-  glow1:     'assets/glow1.jpg',
-  glow2:     'assets/glow2.jpg',
   ice:       'assets/ice.jpeg',
   rocky:     'assets/rocky.jpeg',
   cloudy:    'assets/cloudy.jpeg',
@@ -421,11 +318,10 @@ let activeScene;
 
 const canvas = document.getElementById('webgl');
 
+/* ---------- renderer ---------- */
 function initRenderer() {
   renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    antialias: true,
-    alpha: false,
+    canvas: canvas, antialias: true, alpha: false,
     powerPreference: 'high-performance'
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -434,21 +330,18 @@ function initRenderer() {
 
   camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
   camera.position.set(0, 0, 6);
-
   clock = new THREE.Clock();
 
   composer = new THREE.EffectComposer(renderer);
   composer.addPass(new THREE.RenderPass(sceneLogo, camera));
-
   bloomPass = new THREE.UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    1.1,
-    0.7,
-    0.55
+    1.1, 0.7, 0.55
   );
   composer.addPass(bloomPass);
 }
 
+/* ---------- canvas helpers ---------- */
 function makeSoftDotTexture() {
   const size = 64;
   const c = document.createElement('canvas');
@@ -488,33 +381,27 @@ function makeStarfield(count, spread) {
   const col = new Float32Array(count * 3);
   const c = new THREE.Color();
   for (let i = 0; i < count; i++) {
-    pos[i * 3]     = (Math.random() - 0.5) * spread * 2;
-    pos[i * 3 + 1] = (Math.random() - 0.5) * spread * 2;
-    pos[i * 3 + 2] = (Math.random() - 0.5) * spread * 2;
+    pos[i*3]     = (Math.random() - 0.5) * spread * 2;
+    pos[i*3 + 1] = (Math.random() - 0.5) * spread * 2;
+    pos[i*3 + 2] = (Math.random() - 0.5) * spread * 2;
     const t = Math.random();
     if (t < 0.7) c.setHex(0xffffff);
     else if (t < 0.88) c.setHex(0xd4af37);
     else c.setHex(0xb06cff);
-    col[i * 3] = c.r;
-    col[i * 3 + 1] = c.g;
-    col[i * 3 + 2] = c.b;
+    col[i*3] = c.r; col[i*3+1] = c.g; col[i*3+2] = c.b;
   }
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const mat = new THREE.PointsMaterial({
-    size: 0.22,
-    map: makeSoftDotTexture(),
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.9,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    sizeAttenuation: true
-  });
-  return new THREE.Points(geo, mat);
+  return new THREE.Points(geo, new THREE.PointsMaterial({
+    size: 0.22, map: makeSoftDotTexture(), vertexColors: true,
+    transparent: true, opacity: 0.9, depthWrite: false,
+    blending: THREE.AdditiveBlending, sizeAttenuation: true
+  }));
 }
 
-/* ---------- SCENE 0 — PARTICLE LOGO ---------- */
+/* ============================================================
+   SCENE 0 — PARTICLE LOGO
+   ============================================================ */
 function createSceneLogo() {
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x030308, 0.06);
@@ -534,13 +421,9 @@ function createSceneLogo() {
     const r = 8 + Math.random() * 22;
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
-    positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
-    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-    positions[i * 3 + 2] = r * Math.cos(phi);
-
-    targets[i * 3]     = 0;
-    targets[i * 3 + 1] = 0;
-    targets[i * 3 + 2] = 0;
+    positions[i*3]     = r * Math.sin(phi) * Math.cos(theta);
+    positions[i*3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    positions[i*3 + 2] = r * Math.cos(phi);
 
     const t = Math.random();
     let c;
@@ -548,9 +431,7 @@ function createSceneLogo() {
     else if (t < 0.7) c = cPurple.clone().lerp(cWhite, Math.random() * 0.4);
     else if (t < 0.9) c = cGreen.clone().lerp(cWhite, Math.random() * 0.4);
     else c = cWhite.clone();
-    colors[i * 3]     = c.r;
-    colors[i * 3 + 1] = c.g;
-    colors[i * 3 + 2] = c.b;
+    colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
   }
 
   const geo = new THREE.BufferGeometry();
@@ -558,18 +439,11 @@ function createSceneLogo() {
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.userData = { targets: targets };
 
-  const mat = new THREE.PointsMaterial({
-    size: 0.09,
-    map: makeSoftDotTexture(),
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.92,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    sizeAttenuation: true
-  });
-
-  const points = new THREE.Points(geo, mat);
+  const points = new THREE.Points(geo, new THREE.PointsMaterial({
+    size: 0.09, map: makeSoftDotTexture(), vertexColors: true,
+    transparent: true, opacity: 0.92, depthWrite: false,
+    blending: THREE.AdditiveBlending, sizeAttenuation: true
+  }));
   points.name = 'logoParticles';
   scene.add(points);
 
@@ -583,11 +457,9 @@ function createSceneLogo() {
 }
 
 function buildLogoTargets(img, geo, count) {
-  const w = 220;
-  const h = 220;
+  const w = 220, h = 220;
   const c = document.createElement('canvas');
-  c.width = w;
-  c.height = h;
+  c.width = w; c.height = h;
   const ctx = c.getContext('2d');
   ctx.drawImage(img, 0, 0, w, h);
   const data = ctx.getImageData(0, 0, w, h).data;
@@ -596,30 +468,24 @@ function buildLogoTargets(img, geo, count) {
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const idx = (y * w + x) * 4;
-      const a = data[idx + 3];
-      const r = data[idx];
-      const g = data[idx + 1];
-      const b = data[idx + 2];
-      const lum = (r * 0.299 + g * 0.587 + b * 0.114) * (a / 255);
+      const a = data[idx+3];
+      const lum = (data[idx]*0.299 + data[idx+1]*0.587 + data[idx+2]*0.114) * (a/255);
       if (lum > 40 && a > 30) bright.push({ x: x, y: y });
     }
   }
 
   const targets = geo.userData.targets;
   const scale = 8 / Math.max(w, h);
-  const offsetX = -w * scale * 0.5;
-  const offsetY = -h * scale * 0.5;
+  const ox = -w * scale * 0.5;
+  const oy = -h * scale * 0.5;
 
   if (bright.length === 0) { buildSphereTargets(geo, count); return; }
 
   for (let i = 0; i < count; i++) {
     const b = bright[i % bright.length];
-    const jx = (Math.random() - 0.5) * 1.2;
-    const jy = (Math.random() - 0.5) * 1.2;
-    const jz = (Math.random() - 0.5) * 1.4;
-    targets[i * 3]     = offsetX + b.x * scale + jx;
-    targets[i * 3 + 1] = -(offsetY + b.y * scale) + jy;
-    targets[i * 3 + 2] = jz;
+    targets[i*3]     = ox + b.x * scale + (Math.random() - 0.5) * 1.2;
+    targets[i*3 + 1] = -(oy + b.y * scale) + (Math.random() - 0.5) * 1.2;
+    targets[i*3 + 2] = (Math.random() - 0.5) * 1.4;
   }
   STATE.logoTargetsReady = true;
 }
@@ -630,14 +496,17 @@ function buildSphereTargets(geo, count) {
   for (let i = 0; i < count; i++) {
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
-    targets[i * 3]     = R * Math.sin(phi) * Math.cos(theta);
-    targets[i * 3 + 1] = R * Math.sin(phi) * Math.sin(theta);
-    targets[i * 3 + 2] = R * Math.cos(phi);
+    targets[i*3]     = R * Math.sin(phi) * Math.cos(theta);
+    targets[i*3 + 1] = R * Math.sin(phi) * Math.sin(theta);
+    targets[i*3 + 2] = R * Math.cos(phi);
   }
   STATE.logoTargetsReady = true;
 }
 
-/* ---------- SCENE 1 — GATE ---------- */
+/* ============================================================
+   SCENE 1 — GATE
+   Logo above title is HTML. In 3D we build pillars + portal.
+   ============================================================ */
 function createSceneGate() {
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x030308, 0.045);
@@ -653,12 +522,11 @@ function createSceneGate() {
   rim.position.set(-6, 2, -4);
   scene.add(rim);
 
-  const gateGroup = new THREE.Group();
   const gateWidth = 5.0;
   const gateHeight = 8.0;
 
-  const leftMat = new THREE.MeshBasicMaterial({ color: 0x223344, transparent: true, opacity: 0.0 });
-  const rightMat = new THREE.MeshBasicMaterial({ color: 0x223344, transparent: true, opacity: 0.0 });
+  const leftMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+  const rightMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
 
   const leftDoor = new THREE.Mesh(new THREE.PlaneGeometry(gateWidth, gateHeight), leftMat);
   leftDoor.position.set(-gateWidth / 2, 0, 0);
@@ -668,47 +536,52 @@ function createSceneGate() {
   rightDoor.position.set(gateWidth / 2, 0, 0);
   rightDoor.name = 'gateRight';
 
-  gateGroup.add(leftDoor, rightDoor);
-  scene.add(gateGroup);
+  scene.add(leftDoor, rightDoor);
 
   new THREE.TextureLoader().load(ASSETS.gateLeft, function(t) {
     t.encoding = THREE.sRGBEncoding;
     leftMat.map = t;
     leftMat.opacity = 1;
-    leftMat.color.setHex(0xffffff);
     leftMat.needsUpdate = true;
   });
   new THREE.TextureLoader().load(ASSETS.gateRight, function(t) {
     t.encoding = THREE.sRGBEncoding;
     rightMat.map = t;
     rightMat.opacity = 1;
-    rightMat.color.setHex(0xffffff);
     rightMat.needsUpdate = true;
   });
 
+  /* side pillars */
+  const pillarMat = new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.85 });
+  [-1, 1].forEach(function(side) {
+    const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.35, 9.2, 0.35), pillarMat);
+    pillar.position.set(side * 6.4, -0.2, 0.05);
+    pillar.name = 'pillar' + side;
+    scene.add(pillar);
+
+    const cap = new THREE.Mesh(new THREE.OctahedronGeometry(0.55, 0), pillarMat);
+    cap.position.set(side * 6.4, 4.9, 0.05);
+    cap.name = 'pillarCap' + side;
+    scene.add(cap);
+  });
+
+  /* portal rings */
   const portalGroup = new THREE.Group();
   portalGroup.position.set(0, 0, -0.6);
   portalGroup.name = 'portalGroup';
 
-  const ring = new THREE.Mesh(
+  portalGroup.add(new THREE.Mesh(
     new THREE.TorusGeometry(3.6, 0.18, 24, 96),
     new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.9 })
-  );
-  portalGroup.add(ring);
-
-  const innerRing = new THREE.Mesh(
+  ));
+  portalGroup.add(new THREE.Mesh(
     new THREE.TorusGeometry(3.0, 0.06, 16, 96),
     new THREE.MeshBasicMaterial({ color: 0xb06cff, transparent: true, opacity: 0.8 })
-  );
-  portalGroup.add(innerRing);
+  ));
 
   const vortexMat = new THREE.MeshBasicMaterial({
-    color: 0x9fe0ff,
-    transparent: true,
-    opacity: 0.0,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.DoubleSide
+    color: 0x9fe0ff, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
   });
   const vortex = new THREE.Mesh(new THREE.CircleGeometry(3.4, 64), vortexMat);
   vortex.name = 'portalVortex';
@@ -722,19 +595,18 @@ function createSceneGate() {
 
   scene.add(portalGroup);
 
+  /* portal glow */
   const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: makeRadialGlowTexture(),
-    color: 0xb06cff,
-    transparent: true,
-    opacity: 0.0,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
+    map: makeRadialGlowTexture(), color: 0xb06cff,
+    transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false
   }));
   glowSprite.position.set(0, 0, -1.5);
   glowSprite.scale.set(14, 14, 1);
   glowSprite.name = 'portalGlow';
   scene.add(glowSprite);
 
+  /* ground */
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(80, 80),
     new THREE.MeshBasicMaterial({ color: 0x05060c })
@@ -744,9 +616,10 @@ function createSceneGate() {
   scene.add(ground);
 
   return scene;
-}
+}/* ============================================================
+   Chunk 3: animate loop, gate transition, portal entry, boot
+   ============================================================ */
 
-/* ---------- ANIMATE ---------- */
 function animateLogo(t, dt) {
   const particles = sceneLogo.getObjectByName('logoParticles');
   if (!particles) return;
@@ -801,6 +674,14 @@ function animateGate(t, dt) {
     glow.scale.set(s, s, 1);
     glow.material.opacity = 0.35 + Math.sin(t * 1.8) * 0.12;
   }
+  const pillarMat = sceneGate.getObjectByName('pillar-1');
+  if (pillarMat) {
+    sceneGate.children.forEach(function(o) {
+      if (o.name && o.name.indexOf('pillar') === 0) {
+        o.material.opacity = 0.7 + Math.sin(t * 2) * 0.2;
+      }
+    });
+  }
 }
 
 function resetCamera() {
@@ -828,7 +709,7 @@ function animate() {
   }
 }
 
-/* ---------- TRANSITIONS ---------- */
+/* ---------- gate transition ---------- */
 function transitionToGate() {
   if (STATE.scene === 'gate') return;
   STATE.scene = 'gate';
@@ -847,10 +728,7 @@ function transitionToGate() {
   document.getElementById('scene-gate').classList.add('active');
 
   gsap.to(camera.position, {
-    z: 7.2,
-    y: 0.2,
-    duration: 3.4,
-    ease: 'power2.inOut',
+    z: 7.2, y: 0.2, duration: 3.4, ease: 'power2.inOut',
     onStart: function() {
       gsap.to(fadeEl, { opacity: 0, duration: 1.6, ease: 'power2.inOut' });
     }
@@ -887,10 +765,7 @@ function enterThroughPortal() {
 
   const flashEl = document.getElementById('flash');
   gsap.to(flashEl, {
-    opacity: 1,
-    duration: 0.55,
-    ease: 'power2.in',
-    delay: 2.3,
+    opacity: 1, duration: 0.55, ease: 'power2.in', delay: 2.3,
     onComplete: function() {
       transitionToCarpet();
       gsap.to(flashEl, { opacity: 0, duration: 1.4, ease: 'power2.out', delay: 0.15 });
@@ -922,14 +797,15 @@ function onResize() {
 }
 window.addEventListener('resize', onResize);
 
+/* ---------- boot ---------- */
 function boot() {
   initRenderer();
-  sceneLogo = createSceneLogo();
-  sceneGate = createSceneGate();
+  sceneLogo   = createSceneLogo();
+  sceneGate   = createSceneGate();
   sceneCarpet = createSceneCarpet();
-  sceneShip = createSceneShip();
-  sceneWarp = createSceneWarp();
-  sceneStore = createSceneStore();
+  sceneShip   = createSceneShip();
+  sceneWarp   = createSceneWarp();
+  sceneStore  = createSceneStore();
   activeScene = sceneLogo;
   animate();
   simulateLoader();
@@ -953,21 +829,115 @@ function simulateLoader() {
     }
   }, 130);
 }/* ============================================================
-   VAA STORE — PART 3
-   Scenes 2, 3, 4 + Supabase + final wiring + close tags
+   Chunk 4: Scene 2 — Red carpet with SVG holo-market
+   and spaceship landing behind the girl
    ============================================================ */
 
 let ladySprite = null;
 let ladyFrame = 0;
 let ladyWalkInterval = null;
 let carpetSceneRef = null;
+let landingShip = null;
+let landingShipRef = null;
 
 const LADY_WALK_FRAMES = [ASSETS.lady1, ASSETS.lady2, ASSETS.lady3];
 
-/* ---------- SCENE 2 — CARPET ---------- */
+/* ---------- SVG → texture helper ---------- */
+function svgToTexture(svgMarkup, w, h) {
+  const canvasEl = document.createElement('canvas');
+  canvasEl.width = w;
+  canvasEl.height = h;
+  const ctx = canvasEl.getContext('2d');
+  const blob = new Blob([svgMarkup], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  img.onload = function() {
+    ctx.drawImage(img, 0, 0, w, h);
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+  const tex = new THREE.CanvasTexture(canvasEl);
+  tex.encoding = THREE.sRGBEncoding;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+/* ---------- SVG product shapes ---------- */
+function svgShapeFor(type, color) {
+  const c = color;
+  switch (type) {
+    case 'tshirt':
+      return '<path d="M 90 180 L 130 160 L 150 175 L 170 160 L 210 180 L 220 220 L 200 230 L 200 340 L 100 340 L 100 230 L 80 220 Z" fill="' + c + '" opacity="0.9"/>' +
+             '<path d="M 130 160 Q 150 185 170 160" stroke="#ffffff" stroke-width="3" fill="none" opacity="0.6"/>';
+    case 'sneaker':
+      return '<path d="M 70 280 Q 90 250 130 250 L 170 240 L 200 260 L 230 280 L 230 310 L 70 310 Z" fill="' + c + '" opacity="0.9"/>' +
+             '<path d="M 70 310 L 230 310" stroke="#ffffff" stroke-width="4" opacity="0.5"/>' +
+             '<path d="M 120 255 L 150 270 M 140 250 L 170 265" stroke="#ffffff" stroke-width="2" opacity="0.6"/>';
+    case 'bottle':
+      return '<rect x="135" y="160" width="30" height="30" rx="4" fill="' + c + '" opacity="0.9"/>' +
+             '<rect x="125" y="190" width="50" height="140" rx="14" fill="' + c + '" opacity="0.9"/>' +
+             '<rect x="130" y="220" width="40" height="60" fill="#ffffff" opacity="0.35"/>';
+    case 'lamp':
+      return '<ellipse cx="150" cy="195" rx="55" ry="35" fill="' + c + '" opacity="0.9"/>' +
+             '<rect x="145" y="230" width="10" height="100" fill="' + c + '" opacity="0.9"/>' +
+             '<ellipse cx="150" cy="335" rx="40" ry="8" fill="' + c + '" opacity="0.9"/>';
+    case 'watch':
+      return '<rect x="130" y="160" width="40" height="30" rx="6" fill="' + c + '" opacity="0.9"/>' +
+             '<rect x="130" y="310" width="40" height="30" rx="6" fill="' + c + '" opacity="0.9"/>' +
+             '<circle cx="150" cy="250" r="55" fill="' + c + '" opacity="0.9"/>' +
+             '<circle cx="150" cy="250" r="42" fill="#0a0a1a" opacity="0.85"/>' +
+             '<line x1="150" y1="250" x2="150" y2="222" stroke="' + c + '" stroke-width="3"/>' +
+             '<line x1="150" y1="250" x2="172" y2="255" stroke="' + c + '" stroke-width="3"/>';
+    case 'headphone':
+      return '<path d="M 100 260 Q 100 180 150 180 Q 200 180 200 260" stroke="' + c + '" stroke-width="14" fill="none" stroke-linecap="round"/>' +
+             '<rect x="85" y="250" width="30" height="60" rx="10" fill="' + c + '" opacity="0.9"/>' +
+             '<rect x="185" y="250" width="30" height="60" rx="10" fill="' + c + '" opacity="0.9"/>';
+    case 'perfume':
+      return '<rect x="115" y="230" width="70" height="110" rx="14" fill="' + c + '" opacity="0.9"/>' +
+             '<rect x="135" y="195" width="30" height="40" rx="4" fill="' + c + '" opacity="0.9"/>' +
+             '<circle cx="150" cy="185" r="12" fill="' + c + '" opacity="0.9"/>' +
+             '<rect x="122" y="245" width="56" height="70" fill="#ffffff" opacity="0.25"/>';
+    case 'plant':
+      return '<path d="M 110 330 L 190 330 L 175 270 L 125 270 Z" fill="' + c + '" opacity="0.9"/>' +
+             '<path d="M 150 270 Q 130 220 115 200 Q 145 210 150 250 Q 155 210 185 200 Q 170 220 150 270" fill="' + c + '" opacity="0.85"/>';
+    default:
+      return '<circle cx="150" cy="250" r="80" fill="' + c + '" opacity="0.9"/>';
+  }
+}
+
+/* ---------- build one holo shop facade SVG ---------- */
+function holoShopSvg(shop) {
+  const c = shop.color;
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 500">' +
+    '<defs>' +
+      '<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">' +
+        '<stop offset="0%" stop-color="' + c + '" stop-opacity="0.14"/>' +
+        '<stop offset="100%" stop-color="' + c + '" stop-opacity="0.02"/>' +
+      '</linearGradient>' +
+      '<filter id="glow"><feGaussianBlur stdDeviation="3" result="b"/>' +
+        '<feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+    '</defs>' +
+    '<rect x="10" y="10" width="280" height="480" rx="14" fill="url(#bg)" stroke="' + c + '" stroke-width="2" opacity="0.9"/>' +
+    '<rect x="20" y="20" width="260" height="460" rx="10" fill="none" stroke="' + c + '" stroke-width="0.7" opacity="0.4"/>' +
+    '<g opacity="0.35">' +
+      '<line x1="20" y1="100" x2="280" y2="100" stroke="' + c + '" stroke-width="0.5"/>' +
+      '<line x1="20" y1="180" x2="280" y2="180" stroke="' + c + '" stroke-width="0.5"/>' +
+      '<line x1="20" y1="260" x2="280" y2="260" stroke="' + c + '" stroke-width="0.5"/>' +
+      '<line x1="20" y1="340" x2="280" y2="340" stroke="' + c + '" stroke-width="0.5"/>' +
+      '<line x1="20" y1="420" x2="280" y2="420" stroke="' + c + '" stroke-width="0.5"/>' +
+    '</g>' +
+    '<g transform="translate(75, 55) scale(1.0)" filter="url(#glow)">' +
+      svgShapeFor(shop.type, c) +
+    '</g>' +
+    '<text x="150" y="465" text-anchor="middle" font-family="Orbitron, sans-serif" font-size="20" letter-spacing="6" fill="' + c + '" filter="url(#glow)">' + shop.text + '</text>' +
+    '<rect x="40" y="450" width="220" height="1" fill="' + c + '" opacity="0.5"/>' +
+  '</svg>';
+}
+
+/* ---------- carpet scene ---------- */
 function createSceneCarpet() {
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0a0508, 0.028);
+  scene.fog = new THREE.FogExp2(0x0a0508, 0.022);
 
   scene.add(new THREE.AmbientLight(0x443322, 0.9));
   const key = new THREE.DirectionalLight(0xffd28a, 1.2);
@@ -979,6 +949,7 @@ function createSceneCarpet() {
 
   scene.add(makeStarfield(900, 90));
 
+  /* carpet */
   const carpetTex = new THREE.TextureLoader().load(ASSETS.carpet);
   carpetTex.encoding = THREE.sRGBEncoding;
   carpetTex.wrapS = carpetTex.wrapT = THREE.RepeatWrapping;
@@ -993,13 +964,13 @@ function createSceneCarpet() {
   carpet.name = 'carpet';
   scene.add(carpet);
 
+  /* side rails */
   [-1, 1].forEach(function(side) {
     const rail = new THREE.Mesh(
       new THREE.BoxGeometry(0.08, 0.08, 120),
       new THREE.MeshBasicMaterial({
         color: side === -1 ? 0xd4af37 : 0xb06cff,
-        transparent: true,
-        opacity: 0.9
+        transparent: true, opacity: 0.9
       })
     );
     rail.position.set(side * 7.05, -2.1, -20);
@@ -1007,8 +978,7 @@ function createSceneCarpet() {
     scene.add(rail);
   });
 
-  buildHoloShops(scene);
-
+  /* floating character sprites */
   const charConfigs = [
     { tex: ASSETS.doctor,   pos: [-5.2, 0.6, -10], scale: [2.2, 3.2] },
     { tex: ASSETS.police,   pos: [ 5.4, 0.4, -12], scale: [2.2, 3.2] },
@@ -1019,9 +989,7 @@ function createSceneCarpet() {
 
   charConfigs.forEach(function(cfg, i) {
     const mat = new THREE.SpriteMaterial({
-      transparent: true,
-      opacity: 0,
-      blending: THREE.NormalBlending
+      transparent: true, opacity: 0, blending: THREE.NormalBlending
     });
     const sprite = new THREE.Sprite(mat);
     sprite.position.set(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
@@ -1038,10 +1006,9 @@ function createSceneCarpet() {
     });
   });
 
+  /* lady sprite */
   const ladyMat = new THREE.SpriteMaterial({
-    transparent: true,
-    opacity: 0,
-    blending: THREE.NormalBlending
+    transparent: true, opacity: 0, blending: THREE.NormalBlending
   });
   ladySprite = new THREE.Sprite(ladyMat);
   ladySprite.position.set(0, -0.5, -26);
@@ -1056,65 +1023,115 @@ function createSceneCarpet() {
     gsap.to(ladyMat, { opacity: 1, duration: 1.2 });
   });
 
+  /* SVG holo-market on both sides */
+  buildSvgMarket(scene);
+
+  /* spaceship that lands behind the girl */
+  buildLandingShip(scene);
+
   carpetSceneRef = scene;
   return scene;
 }
 
-function buildHoloShops(scene) {
+/* ---------- SVG market — 8 shop facades on both sides ---------- */
+function buildSvgMarket(scene) {
   const shops = [
-    { text: 'ATTIRE',  color: '#d4af37', x: -9,  z: -30 },
-    { text: 'TECH',    color: '#9fe0ff', x:  9,  z: -34 },
-    { text: 'BEAUTY',  color: '#b06cff', x: -11, z: -42 },
-    { text: 'HOME',    color: '#7dffb0', x:  11, z: -46 }
+    { type: 'tshirt',   text: 'ATTIRE',  color: '#d4af37', x: -9.5, z: -16 },
+    { type: 'sneaker',  text: 'FOOTWEAR',color: '#f0d98c', x:  9.5, z: -18 },
+    { type: 'headphone',text: 'TECH',    color: '#9fe0ff', x: -10.5,z: -28 },
+    { type: 'watch',    text: 'TIMEPIECE',color:'#7dffb0', x: 10.5, z: -30 },
+    { type: 'perfume',  text: 'BEAUTY',  color: '#b06cff', x: -10.0,z: -40 },
+    { type: 'bottle',   text: 'FRAGRANCE',color:'#f0d98c', x: 10.0, z: -42 },
+    { type: 'lamp',     text: 'HOME',    color: '#7dffb0', x: -9.8, z: -52 },
+    { type: 'plant',    text: 'GARDEN',  color: '#9fe0ff', x:  9.8, z: -54 }
   ];
 
   shops.forEach(function(shop, i) {
-    const c = document.createElement('canvas');
-    c.width = 512;
-    c.height = 512;
-    const ctx = c.getContext('2d');
-
-    ctx.strokeStyle = shop.color;
-    ctx.lineWidth = 6;
-    ctx.shadowColor = shop.color;
-    ctx.shadowBlur = 30;
-    ctx.strokeRect(30, 30, 452, 452);
-
-    ctx.strokeStyle = shop.color + '55';
-    ctx.lineWidth = 1;
-    for (let g = 0; g < 512; g += 32) {
-      ctx.beginPath(); ctx.moveTo(g, 30); ctx.lineTo(g, 482); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(30, g); ctx.lineTo(482, g); ctx.stroke();
-    }
-
-    ctx.font = 'bold 64px Orbitron, sans-serif';
-    ctx.fillStyle = shop.color;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowBlur = 40;
-    ctx.fillText(shop.text, 256, 256);
-
-    const tex = new THREE.CanvasTexture(c);
-    tex.needsUpdate = true;
-
+    const tex = svgToTexture(holoShopSvg(shop), 512, 854);
     const mat = new THREE.MeshBasicMaterial({
-      map: tex,
-      transparent: true,
-      opacity: 0,
+      map: tex, transparent: true, opacity: 0,
       blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      side: THREE.DoubleSide
+      depthWrite: false, side: THREE.DoubleSide
     });
-
-    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), mat);
-    mesh.position.set(shop.x, 1.5, shop.z);
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(6, 10), mat);
+    mesh.position.set(shop.x, 1.8, shop.z);
+    mesh.rotation.y = shop.x < 0 ? Math.PI * 0.12 : -Math.PI * 0.12;
     mesh.name = 'holoShop' + i;
     scene.add(mesh);
 
-    gsap.to(mat, { opacity: 0.55, duration: 2.0, delay: 0.6 + i * 0.2, ease: 'power2.out' });
+    gsap.to(mat, { opacity: 0.85, duration: 1.6, delay: 0.4 + i * 0.12, ease: 'power2.out' });
   });
 }
 
+/* ---------- spaceship landing behind the girl ---------- */
+function buildLandingShip(scene) {
+  const shipMat = new THREE.SpriteMaterial({
+    transparent: true, opacity: 0, blending: THREE.NormalBlending
+  });
+  landingShip = new THREE.Sprite(shipMat);
+  landingShip.position.set(0, 14, -32);
+  landingShip.scale.set(6, 6, 1);
+  landingShip.name = 'landingShip';
+  scene.add(landingShip);
+
+  new THREE.TextureLoader().load(ASSETS.ship, function(t) {
+    t.encoding = THREE.sRGBEncoding;
+    shipMat.map = t;
+    shipMat.needsUpdate = true;
+  });
+
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: makeRadialGlowTexture(), color: 0x9fe0ff,
+    transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false
+  }));
+  glow.position.set(0, 12, -31);
+  glow.scale.set(0, 0, 1);
+  glow.name = 'landingGlow';
+  scene.add(glow);
+
+  const dust = new THREE.Mesh(
+    new THREE.RingGeometry(0.5, 1, 32),
+    new THREE.MeshBasicMaterial({
+      color: 0xd4af37, transparent: true, opacity: 0,
+      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+    })
+  );
+  dust.rotation.x = -Math.PI / 2;
+  dust.position.set(0, -1.8, -32);
+  dust.name = 'landingDust';
+  scene.add(dust);
+
+  landingShipRef = scene;
+}
+
+function playLandingSequence() {
+  const ship = landingShip;
+  const glow = carpetSceneRef.getObjectByName('landingGlow');
+  const dust = carpetSceneRef.getObjectByName('landingDust');
+  if (!ship) return;
+
+  gsap.to(ship.material, { opacity: 1, duration: 1.0 });
+  if (glow) {
+    gsap.to(glow.material, { opacity: 0.95, duration: 0.8 });
+    gsap.to(glow.scale, { x: 10, y: 10, duration: 0.8 });
+  }
+
+  gsap.to(ship.position, {
+    y: -0.4, z: -32, duration: 3.4, ease: 'power2.out',
+    onComplete: function() {
+      if (glow) gsap.to(glow.material, { opacity: 0, duration: 1.2 });
+      if (dust) {
+        gsap.set(dust.material, { opacity: 0.9 });
+        gsap.set(dust.scale, { x: 1, y: 1 });
+        gsap.to(dust.scale, { x: 12, y: 12, duration: 1.8, ease: 'power2.out' });
+        gsap.to(dust.material, { opacity: 0, duration: 1.8 });
+      }
+      gsap.to(ship.scale, { x: 6.8, y: 6.8, duration: 0.6, ease: 'back.out(2)' });
+    }
+  });
+}
+
+/* ---------- carpet animation ---------- */
 function animateCarpet(t, dt) {
   if (!carpetSceneRef) return;
 
@@ -1128,11 +1145,11 @@ function animateCarpet(t, dt) {
     if (rail) rail.material.opacity = 0.7 + Math.sin(t * 2 + side) * 0.25;
   });
 
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 8; i++) {
     const h = carpetSceneRef.getObjectByName('holoShop' + i);
     if (h) {
-      h.position.y = 1.5 + Math.sin(t * 0.8 + i) * 0.15;
-      h.material.opacity = 0.45 + Math.sin(t * 1.2 + i * 1.5) * 0.15;
+      h.position.y = 1.8 + Math.sin(t * 0.7 + i * 1.2) * 0.18;
+      h.material.opacity = 0.7 + Math.sin(t * 1.1 + i * 0.9) * 0.12;
     }
   }
 
@@ -1140,8 +1157,13 @@ function animateCarpet(t, dt) {
     const ch = carpetSceneRef.getObjectByName('char' + i);
     if (ch) ch.position.y = ch.userData.baseY + Math.sin(t * 0.6 + i) * 0.08;
   }
+
+  if (landingShip && landingShip.position.y <= 0) {
+    landingShip.position.y = -0.4 + Math.sin(t * 1.4) * 0.04;
+  }
 }
 
+/* ---------- carpet transitions ---------- */
 function transitionToCarpet() {
   STATE.scene = 'carpet';
   activeScene = sceneCarpet;
@@ -1152,14 +1174,12 @@ function transitionToCarpet() {
   document.getElementById('scene-carpet').classList.add('active');
 
   gsap.to(camera.position, {
-    z: -8,
-    y: 0.4,
-    duration: 4.0,
-    ease: 'power2.inOut',
+    z: -8, y: 0.4, duration: 4.0, ease: 'power2.inOut',
     onUpdate: function() { camera.lookAt(0, -0.5, camera.position.z - 20); }
   });
 
   setTimeout(function() { startLadyWalk(); }, 1200);
+  setTimeout(function() { playLandingSequence(); }, 3600);
 }
 
 function startLadyWalk() {
@@ -1175,9 +1195,7 @@ function startLadyWalk() {
   }, 220);
 
   gsap.to(ladySprite.position, {
-    z: -14,
-    duration: 4.5,
-    ease: 'power2.inOut',
+    z: -14, duration: 4.5, ease: 'power2.inOut',
     onComplete: function() {
       clearInterval(ladyWalkInterval);
       ladyWalkInterval = null;
@@ -1234,14 +1252,16 @@ function speak(text) {
     if (female) u.voice = female;
     window.speechSynthesis.speak(u);
   } catch (e) {}
-}
+}/* ============================================================
+   Chunk 5: Scenes 3-4, Supabase, search wiring, close file
+   ============================================================ */
 
-/* ---------- SCENE 3 — SHIP + WARP ---------- */
 let shipSceneRef = null;
 let warpSceneRef = null;
 let warpParticles = null;
 let warpSpeed = 0;
 
+/* ---------- SCENE 3 — SHIP ---------- */
 function createSceneShip() {
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x030308, 0.03);
@@ -1264,9 +1284,7 @@ function createSceneShip() {
   scene.add(makeStarfield(1200, 100));
 
   const shipMat = new THREE.SpriteMaterial({
-    transparent: true,
-    opacity: 0,
-    blending: THREE.NormalBlending
+    transparent: true, opacity: 0, blending: THREE.NormalBlending
   });
   const ship = new THREE.Sprite(shipMat);
   ship.position.set(0, 0, -18);
@@ -1310,10 +1328,7 @@ function transitionToShipAndWarp(query) {
 
   const fadeEl = document.getElementById('fade');
   gsap.to(fadeEl, {
-    opacity: 1,
-    duration: 1.0,
-    ease: 'power2.in',
-    delay: 0.6,
+    opacity: 1, duration: 1.0, ease: 'power2.in', delay: 0.6,
     onComplete: function() {
       activeScene = sceneShip;
       resetCamera();
@@ -1332,17 +1347,10 @@ function animateShipIn() {
   ship.position.set(2, -2, -22);
 
   gsap.to(ship.position, {
-    x: 0.5,
-    y: 0.2,
-    z: -6,
-    duration: 2.6,
-    ease: 'power2.inOut',
+    x: 0.5, y: 0.2, z: -6, duration: 2.6, ease: 'power2.inOut',
     onComplete: function() {
       gsap.to(camera.position, {
-        z: -3.8,
-        y: 0.1,
-        duration: 1.6,
-        ease: 'power3.in',
+        z: -3.8, y: 0.1, duration: 1.6, ease: 'power3.in',
         onComplete: function() { switchToWarp(); }
       });
       gsap.to(ship.scale, { x: 14, y: 14, duration: 1.6, ease: 'power3.in' });
@@ -1350,6 +1358,7 @@ function animateShipIn() {
   });
 }
 
+/* ---------- SCENE 3 — WARP ---------- */
 function createSceneWarp() {
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x020208, 0.02);
@@ -1374,27 +1383,20 @@ function createSceneWarp() {
   const cC = new THREE.Color(0xffffff);
 
   for (let i = 0; i < count; i++) {
-    pos[i * 3]     = (Math.random() - 0.5) * 30;
-    pos[i * 3 + 1] = (Math.random() - 0.5) * 20;
-    pos[i * 3 + 2] = -Math.random() * 120;
+    pos[i*3]     = (Math.random() - 0.5) * 30;
+    pos[i*3 + 1] = (Math.random() - 0.5) * 20;
+    pos[i*3 + 2] = -Math.random() * 120;
     const r = Math.random();
     const c = r < 0.5 ? cA : (r < 0.8 ? cC : cB);
-    col[i * 3] = c.r;
-    col[i * 3 + 1] = c.g;
-    col[i * 3 + 2] = c.b;
+    col[i*3] = c.r; col[i*3+1] = c.g; col[i*3+2] = c.b;
   }
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
 
   const mat = new THREE.PointsMaterial({
-    size: 0.18,
-    map: makeSoftDotTexture(),
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.95,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    sizeAttenuation: true
+    size: 0.18, map: makeSoftDotTexture(), vertexColors: true,
+    transparent: true, opacity: 0.95, depthWrite: false,
+    blending: THREE.AdditiveBlending, sizeAttenuation: true
   });
 
   warpParticles = new THREE.Points(geo, mat);
@@ -1464,20 +1466,13 @@ function createSceneStore() {
   for (let i = 0; i < icePos.count; i++) {
     const x = icePos.getX(i);
     const y = icePos.getY(i);
-    const z = Math.sin(x * 0.5) * Math.cos(y * 0.6) * 0.8;
-    icePos.setZ(i, z);
+    icePos.setZ(i, Math.sin(x * 0.5) * Math.cos(y * 0.6) * 0.8);
   }
   iceGeo.computeVertexNormals();
 
-  const iceMat = new THREE.MeshStandardMaterial({
-    map: iceTex,
-    color: 0xaad4ff,
-    roughness: 0.6,
-    metalness: 0.3,
-    flatShading: true
-  });
-
-  const ice = new THREE.Mesh(iceGeo, iceMat);
+  const ice = new THREE.Mesh(iceGeo, new THREE.MeshStandardMaterial({
+    map: iceTex, color: 0xaad4ff, roughness: 0.6, metalness: 0.3, flatShading: true
+  }));
   ice.rotation.x = -Math.PI / 2;
   ice.position.y = -3.2;
   ice.name = 'iceFloor';
@@ -1485,16 +1480,13 @@ function createSceneStore() {
 
   for (let i = 0; i < 14; i++) {
     const h = 4 + Math.random() * 8;
-    const coneGeo = new THREE.ConeGeometry(1.2 + Math.random() * 2, h, 5);
-    const coneMat = new THREE.MeshStandardMaterial({
-      color: 0x88bbee,
-      roughness: 0.5,
-      metalness: 0.2,
-      flatShading: true,
-      transparent: true,
-      opacity: 0.85
-    });
-    const cone = new THREE.Mesh(coneGeo, coneMat);
+    const cone = new THREE.Mesh(
+      new THREE.ConeGeometry(1.2 + Math.random() * 2, h, 5),
+      new THREE.MeshStandardMaterial({
+        color: 0x88bbee, roughness: 0.5, metalness: 0.2,
+        flatShading: true, transparent: true, opacity: 0.85
+      })
+    );
     const angle = (i / 14) * Math.PI * 2;
     const r = 22 + Math.random() * 12;
     cone.position.set(Math.cos(angle) * r, -3.2 + h / 2, Math.sin(angle) * r);
@@ -1505,25 +1497,22 @@ function createSceneStore() {
 
   scene.add(makeStarfield(1000, 110));
 
-  const orbPaths = [ASSETS.orb1, ASSETS.orb2, ASSETS.orb3, ASSETS.orb4];
-  orbPaths.forEach(function(path, i) {
-    const glowMat = new THREE.SpriteMaterial({
-      transparent: true,
-      opacity: 0.6,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
+  [ASSETS.orb1, ASSETS.orb2, ASSETS.orb3, ASSETS.orb4].forEach(function(path, i) {
+    const mat = new THREE.SpriteMaterial({
+      transparent: true, opacity: 0.6,
+      blending: THREE.AdditiveBlending, depthWrite: false
     });
-    const sprite = new THREE.Sprite(glowMat);
-    sprite.scale.set(6, 6, 1);
+    const s = new THREE.Sprite(mat);
+    s.scale.set(6, 6, 1);
     const angle = (i / 4) * Math.PI * 2;
-    sprite.position.set(Math.cos(angle) * 14, 2 + Math.random() * 3, Math.sin(angle) * 14 - 6);
-    sprite.name = 'orb' + i;
+    s.position.set(Math.cos(angle) * 14, 2 + Math.random() * 3, Math.sin(angle) * 14 - 6);
+    s.name = 'orb' + i;
     new THREE.TextureLoader().load(path, function(t) {
       t.encoding = THREE.sRGBEncoding;
-      glowMat.map = t;
-      glowMat.needsUpdate = true;
+      mat.map = t;
+      mat.needsUpdate = true;
     });
-    scene.add(sprite);
+    scene.add(s);
   });
 
   storeSceneRef = scene;
@@ -1540,9 +1529,7 @@ function animateStore(t, dt) {
     }
   });
   const floor = storeSceneRef.getObjectByName('iceFloor');
-  if (floor && floor.material.map) {
-    floor.material.map.offset.x = (t * 0.01) % 1;
-  }
+  if (floor && floor.material.map) floor.material.map.offset.x = (t * 0.01) % 1;
 }
 
 function landOnIcePlanet() {
@@ -1550,9 +1537,7 @@ function landOnIcePlanet() {
   const fadeEl = document.getElementById('fade');
 
   gsap.to(fadeEl, {
-    opacity: 1,
-    duration: 0.7,
-    ease: 'power2.in',
+    opacity: 1, duration: 0.7, ease: 'power2.in',
     onComplete: function() {
       activeScene = sceneStore;
       resetCamera();
@@ -1563,13 +1548,7 @@ function landOnIcePlanet() {
       if (bloomPass) gsap.to(bloomPass, { strength: 0.9, duration: 1.2 });
 
       gsap.to(fadeEl, { opacity: 0, duration: 1.4, ease: 'power2.out' });
-
-      gsap.to(camera.position, {
-        z: 3,
-        y: 1.2,
-        duration: 3.0,
-        ease: 'power2.inOut'
-      });
+      gsap.to(camera.position, { z: 3, y: 1.2, duration: 3.0, ease: 'power2.inOut' });
 
       document.getElementById('scene-store').classList.add('active');
       fetchProducts();
@@ -1597,10 +1576,7 @@ async function fetchProducts() {
   gridEl.innerHTML = '';
 
   const client = initSupabase();
-  if (!client) {
-    loadingEl.textContent = 'Supabase unavailable.';
-    return;
-  }
+  if (!client) { loadingEl.textContent = 'Supabase unavailable.'; return; }
 
   try {
     let query = client
@@ -1648,9 +1624,7 @@ function renderProducts(products) {
     const sizes = Array.isArray(p.sizes) && p.sizes.length > 0
       ? p.sizes.map(function(s) { return '<span>' + escapeHtml(String(s)) + '</span>'; }).join('')
       : '';
-    const price = (typeof p.price === 'number')
-      ? p.price.toFixed(2)
-      : Number(p.price || 0).toFixed(2);
+    const price = (typeof p.price === 'number') ? p.price.toFixed(2) : Number(p.price || 0).toFixed(2);
 
     card.innerHTML =
       '<div class="card-img-wrap">' +
@@ -1675,11 +1649,8 @@ function renderProducts(products) {
 
 function escapeHtml(str) {
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
 /* ---------- SEARCH UI ---------- */
