@@ -363,8 +363,8 @@
 
 <script>/* ============================================================
    VAA STORE — PART 2
-   Config, Supabase client, Three.js core, composer/bloom,
-   Scene 0 (particle logo), Scene 1 (gate + portal + flash)
+   Config, Three.js core, composer/bloom, Scene 0 (particle logo),
+   Scene 1 (gate + portal + flash)
    ============================================================ */
 
 const SUPABASE_URL = 'https://gynphsibkcrivosuamxp.supabase.co';
@@ -372,14 +372,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const ASSETS = {
   logo:      'assets/vaastorelogo.png',
-  gateLeft:  'assets/gateleft.png',
-  gateLeftJ: 'assets/gateleft.jpeg',
-  gateRight: 'assets/gateright.png',
-  gateRightJ:'assets/gateright.jpeg',
+  gateLeft:  'assets/gateleft.jpeg',
+  gateRight: 'assets/gateright.jpeg',
   portal:    'assets/portal.jpeg',
   carpet:    'assets/carpet.jpeg',
-  nebula:    'assets/nebula.jpeg',
-  space:     'assets/space.jpeg',
+  nebula:    'assets/nebula.jpg',
+  space:     'assets/space.jpg',
   dust:      'assets/dust.jpg',
   star:      'assets/star.jpg',
   noise:     'assets/noise.jpg',
@@ -388,7 +386,7 @@ const ASSETS = {
   ice:       'assets/ice.jpeg',
   rocky:     'assets/rocky.jpeg',
   cloudy:    'assets/cloudy.jpeg',
-  window:    'assets/window.jpeg',
+  window:    'assets/window.jpg',
   ship:      'assets/spaceship.png',
   lady1:     'assets/ladywalk1.png',
   lady2:     'assets/ladywalk2.png',
@@ -397,10 +395,14 @@ const ASSETS = {
   ladyPoint: 'assets/ladypoint.png',
   girlTurn:  'assets/girlturn.png',
   doctor:    'assets/doctor.png',
-  police:    'assets/police.png',
+  police:    'assets/police(2).png',
   business:  'assets/buisnessman.png',
   shopper1:  'assets/shopper1.png',
   shopper2:  'assets/shopper2.png',
+  orb1:      'assets/orb1.jpeg',
+  orb2:      'assets/orb2.jpeg',
+  orb3:      'assets/orb3.jpeg',
+  orb4:      'assets/orb4.jpeg',
   whoosh:    'assets/wohh.mp4'
 };
 
@@ -510,23 +512,6 @@ function makeStarfield(count, spread) {
     sizeAttenuation: true
   });
   return new THREE.Points(geo, mat);
-}
-
-function loadTextureWithFallback(urlA, urlB, onLoad) {
-  const loader = new THREE.TextureLoader();
-  loader.load(
-    urlA,
-    function(tex) { tex.encoding = THREE.sRGBEncoding; onLoad(tex); },
-    undefined,
-    function() {
-      loader.load(
-        urlB,
-        function(tex) { tex.encoding = THREE.sRGBEncoding; onLoad(tex); },
-        undefined,
-        function() {}
-      );
-    }
-  );
 }
 
 /* ---------- SCENE 0 — PARTICLE LOGO ---------- */
@@ -686,14 +671,16 @@ function createSceneGate() {
   gateGroup.add(leftDoor, rightDoor);
   scene.add(gateGroup);
 
-  loadTextureWithFallback(ASSETS.gateLeft, ASSETS.gateLeftJ, function(tex) {
-    leftMat.map = tex;
+  new THREE.TextureLoader().load(ASSETS.gateLeft, function(t) {
+    t.encoding = THREE.sRGBEncoding;
+    leftMat.map = t;
     leftMat.opacity = 1;
     leftMat.color.setHex(0xffffff);
     leftMat.needsUpdate = true;
   });
-  loadTextureWithFallback(ASSETS.gateRight, ASSETS.gateRightJ, function(tex) {
-    rightMat.map = tex;
+  new THREE.TextureLoader().load(ASSETS.gateRight, function(t) {
+    t.encoding = THREE.sRGBEncoding;
+    rightMat.map = t;
     rightMat.opacity = 1;
     rightMat.color.setHex(0xffffff);
     rightMat.needsUpdate = true;
@@ -836,8 +823,7 @@ function animate() {
   else if (activeScene === sceneStore && typeof animateStore === 'function') animateStore(t, dt);
 
   if (activeScene) {
-    const scene = activeScene;
-    if (composer.passes[0]) composer.passes[0].scene = scene;
+    if (composer.passes[0]) composer.passes[0].scene = activeScene;
     composer.render();
   }
 }
@@ -938,14 +924,12 @@ window.addEventListener('resize', onResize);
 
 function boot() {
   initRenderer();
-
   sceneLogo = createSceneLogo();
   sceneGate = createSceneGate();
   sceneCarpet = createSceneCarpet();
   sceneShip = createSceneShip();
   sceneWarp = createSceneWarp();
   sceneStore = createSceneStore();
-
   activeScene = sceneLogo;
   animate();
   simulateLoader();
@@ -970,7 +954,7 @@ function simulateLoader() {
   }, 130);
 }/* ============================================================
    VAA STORE — PART 3
-   Scenes 2, 3, 4 + Supabase + final wiring + </script></body></html>
+   Scenes 2, 3, 4 + Supabase + final wiring + close tags
    ============================================================ */
 
 let ladySprite = null;
@@ -1521,8 +1505,8 @@ function createSceneStore() {
 
   scene.add(makeStarfield(1000, 110));
 
-  ['orb1', 'orb2', 'orb3', 'orb4'].forEach(function(key, i) {
-    const path = 'assets/' + key + '.jpeg';
+  const orbPaths = [ASSETS.orb1, ASSETS.orb2, ASSETS.orb3, ASSETS.orb4];
+  orbPaths.forEach(function(path, i) {
     const glowMat = new THREE.SpriteMaterial({
       transparent: true,
       opacity: 0.6,
@@ -1548,8 +1532,8 @@ function createSceneStore() {
 
 function animateStore(t, dt) {
   if (!storeSceneRef) return;
-  ['orb0', 'orb1', 'orb2', 'orb3'].forEach(function(name, i) {
-    const orb = storeSceneRef.getObjectByName(name);
+  [0, 1, 2, 3].forEach(function(i) {
+    const orb = storeSceneRef.getObjectByName('orb' + i);
     if (orb) {
       orb.position.y = 2.5 + Math.sin(t * 0.6 + i * 1.4) * 0.6;
       orb.material.opacity = 0.45 + Math.sin(t * 0.9 + i) * 0.15;
@@ -1660,7 +1644,7 @@ function renderProducts(products) {
     card.className = 'product-card';
     card.style.animationDelay = (i * 0.06) + 's';
 
-    const imgUrl = (p.images && p.images.length > 0) ? p.images[0] : 'assets/cloudy.jpeg';
+    const imgUrl = (p.images && p.images.length > 0) ? p.images[0] : ASSETS.cloudy;
     const sizes = Array.isArray(p.sizes) && p.sizes.length > 0
       ? p.sizes.map(function(s) { return '<span>' + escapeHtml(String(s)) + '</span>'; }).join('')
       : '';
@@ -1670,7 +1654,7 @@ function renderProducts(products) {
 
     card.innerHTML =
       '<div class="card-img-wrap">' +
-        '<img src="' + escapeHtml(imgUrl) + '" alt="' + escapeHtml(p.name || '') + '" loading="lazy" onerror="this.onerror=null;this.src=\'assets/cloudy.jpeg\';" />' +
+        '<img src="' + escapeHtml(imgUrl) + '" alt="' + escapeHtml(p.name || '') + '" loading="lazy" onerror="this.onerror=null;this.src=\'' + ASSETS.cloudy + '\';" />' +
       '</div>' +
       '<div class="card-body">' +
         '<div class="card-name">' + escapeHtml(p.name || 'Untitled') + '</div>' +
