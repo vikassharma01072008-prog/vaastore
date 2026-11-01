@@ -15,660 +15,360 @@
     --purple: #b06cff;
     --ice: #9fe0ff;
     --bg: #050508;
-    --panel: rgba(10, 12, 22, 0.72);
-    --panel-border: rgba(212, 175, 55, 0.35);
     --text: #eef1f7;
     --muted: #8a93a6;
   }
-
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   html, body {
-    width: 100%;
-    height: 100%;
-    background: var(--bg);
-    color: var(--text);
+    width: 100%; height: 100%;
+    background: var(--bg); color: var(--text);
     font-family: 'Rajdhani', sans-serif;
-    overflow: hidden;
-    overscroll-behavior: none;
+    overflow: hidden; overscroll-behavior: none;
   }
-
   body { -webkit-font-smoothing: antialiased; }
-
   canvas { display: block; }
-
-  /* ============================================================
-     GLOBAL 3D CANVAS LAYER (behind all HTML overlays)
-     ============================================================ */
   #webgl {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+    position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1;
     background: radial-gradient(ellipse at center, #0a0a18 0%, #030308 70%, #000 100%);
   }
-
-  /* ============================================================
-     LOADER (Scene 0 overlay)
-     ============================================================ */
   #loader {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 28px;
     background: radial-gradient(ellipse at center, #0a0a18 0%, #030308 70%, #000 100%);
     transition: opacity 0.9s ease;
   }
   #loader.fade-out { opacity: 0; pointer-events: none; }
-
   #loader .logo-wrap {
-    position: relative;
-    width: min(340px, 62vw);
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative; width: min(340px, 62vw); aspect-ratio: 1 / 1;
+    display: flex; align-items: center; justify-content: center;
   }
   #loader .logo-wrap img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
+    width: 100%; height: 100%; object-fit: contain;
     mix-blend-mode: screen;
     filter: drop-shadow(0 0 24px rgba(212,175,55,0.55)) drop-shadow(0 0 60px rgba(176,108,255,0.25));
     animation: logoPulse 2.6s ease-in-out infinite;
   }
   @keyframes logoPulse {
-    0%, 100% { transform: scale(1); filter: drop-shadow(0 0 24px rgba(212,175,55,0.55)) drop-shadow(0 0 60px rgba(176,108,255,0.25)); }
-    50%      { transform: scale(1.04); filter: drop-shadow(0 0 38px rgba(212,175,55,0.85)) drop-shadow(0 0 90px rgba(176,108,255,0.45)); }
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.04); }
   }
-
   #loader .brand {
-    font-family: 'Cinzel', serif;
-    font-weight: 700;
-    letter-spacing: 0.55em;
-    font-size: clamp(14px, 2vw, 20px);
-    color: var(--gold-soft);
-    text-indent: 0.55em;
+    font-family: 'Cinzel', serif; font-weight: 700;
+    letter-spacing: 0.55em; font-size: clamp(14px, 2vw, 20px);
+    color: var(--gold-soft); text-indent: 0.55em;
     text-shadow: 0 0 18px rgba(212,175,55,0.6);
   }
-
   #loader .bar-track {
-    width: min(360px, 70vw);
-    height: 3px;
-    background: rgba(212,175,55,0.15);
-    border-radius: 3px;
-    overflow: hidden;
-    position: relative;
+    width: min(360px, 70vw); height: 3px;
+    background: rgba(212,175,55,0.15); border-radius: 3px;
+    overflow: hidden; position: relative;
   }
   #loader .bar-fill {
-    position: absolute;
-    inset: 0;
-    width: 0%;
+    position: absolute; inset: 0; width: 0%;
     background: linear-gradient(90deg, var(--purple), var(--gold), var(--green));
     box-shadow: 0 0 16px rgba(212,175,55,0.8);
     transition: width 0.3s ease;
   }
   #loader .status {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 10px;
-    letter-spacing: 0.35em;
-    color: var(--muted);
-    text-transform: uppercase;
+    font-family: 'Orbitron', sans-serif; font-size: 10px;
+    letter-spacing: 0.35em; color: var(--muted); text-transform: uppercase;
   }
-
-  /* ============================================================
-     SCENE 1 — GATE UI OVERLAY
-     ============================================================ */
   #scene-gate {
-    position: fixed;
-    inset: 0;
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 34px;
-    pointer-events: none;
-    opacity: 0;
+    position: fixed; inset: 0; z-index: 20;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 34px; pointer-events: none; opacity: 0;
     transition: opacity 1.2s ease;
   }
   #scene-gate.active { opacity: 1; pointer-events: auto; }
-
   #scene-gate .gate-title {
-    font-family: 'Cinzel', serif;
-    font-weight: 900;
+    font-family: 'Cinzel', serif; font-weight: 900;
     font-size: clamp(34px, 7vw, 92px);
-    letter-spacing: 0.22em;
-    text-indent: 0.22em;
-    color: #fff;
-    text-shadow:
-      0 0 20px rgba(212,175,55,0.9),
-      0 0 60px rgba(212,175,55,0.5),
-      0 0 120px rgba(176,108,255,0.4);
+    letter-spacing: 0.22em; text-indent: 0.22em; color: #fff;
+    text-shadow: 0 0 20px rgba(212,175,55,0.9), 0 0 60px rgba(212,175,55,0.5), 0 0 120px rgba(176,108,255,0.4);
     padding: 22px 46px;
     border: 1px solid rgba(212,175,55,0.55);
     border-radius: 6px;
     background: rgba(5,6,14,0.35);
     backdrop-filter: blur(6px);
-    box-shadow:
-      inset 0 0 40px rgba(212,175,55,0.12),
-      0 0 60px rgba(212,175,55,0.25);
-    text-align: center;
-    line-height: 1;
+    box-shadow: inset 0 0 40px rgba(212,175,55,0.12), 0 0 60px rgba(212,175,55,0.25);
+    text-align: center; line-height: 1;
   }
   #scene-gate .gate-sub {
-    font-family: 'Orbitron', sans-serif;
-    font-size: clamp(9px, 1.2vw, 12px);
-    letter-spacing: 0.6em;
-    color: var(--gold-soft);
-    opacity: 0.8;
-    text-transform: uppercase;
+    font-family: 'Orbitron', sans-serif; font-size: clamp(9px, 1.2vw, 12px);
+    letter-spacing: 0.6em; color: var(--gold-soft); opacity: 0.8; text-transform: uppercase;
   }
-
   #enter-btn {
-    pointer-events: auto;
-    cursor: pointer;
-    position: relative;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
+    pointer-events: auto; cursor: pointer; position: relative;
+    font-family: 'Orbitron', sans-serif; font-weight: 700;
     font-size: clamp(12px, 1.4vw, 15px);
-    letter-spacing: 0.45em;
-    text-indent: 0.45em;
+    letter-spacing: 0.45em; text-indent: 0.45em;
     color: #0a0a12;
     background: linear-gradient(135deg, var(--gold-soft), var(--gold));
-    border: none;
-    padding: 20px 54px;
-    border-radius: 4px;
-    box-shadow:
-      0 0 30px rgba(212,175,55,0.65),
-      0 0 90px rgba(212,175,55,0.35),
-      inset 0 0 20px rgba(255,255,255,0.35);
+    border: none; padding: 20px 54px; border-radius: 4px;
+    box-shadow: 0 0 30px rgba(212,175,55,0.65), 0 0 90px rgba(212,175,55,0.35), inset 0 0 20px rgba(255,255,255,0.35);
     transition: transform 0.25s ease, box-shadow 0.25s ease;
     overflow: hidden;
   }
   #enter-btn::after {
-    content: '';
-    position: absolute;
-    top: 0; left: -60%;
-    width: 40%; height: 100%;
+    content: ''; position: absolute;
+    top: 0; left: -60%; width: 40%; height: 100%;
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.7), transparent);
     transform: skewX(-20deg);
     animation: btnShine 2.6s ease-in-out infinite;
   }
   @keyframes btnShine {
-    0%   { left: -60%; }
-    55%  { left: 130%; }
-    100% { left: 130%; }
+    0% { left: -60%; } 55% { left: 130%; } 100% { left: 130%; }
   }
   #enter-btn:hover {
     transform: translateY(-2px) scale(1.03);
-    box-shadow:
-      0 0 44px rgba(212,175,55,0.9),
-      0 0 130px rgba(212,175,55,0.55),
-      inset 0 0 24px rgba(255,255,255,0.5);
+    box-shadow: 0 0 44px rgba(212,175,55,0.9), 0 0 130px rgba(212,175,55,0.55), inset 0 0 24px rgba(255,255,255,0.5);
   }
-  #enter-btn:active { transform: translateY(0) scale(0.99); }
-
-  /* ============================================================
-     SCENE 2 — CARPET / LADY / SEARCH OVERLAY
-     ============================================================ */
   #scene-carpet {
-    position: fixed;
-    inset: 0;
-    z-index: 15;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 1s ease;
+    position: fixed; inset: 0; z-index: 15;
+    pointer-events: none; opacity: 0; transition: opacity 1s ease;
   }
   #scene-carpet.active { opacity: 1; }
-
-  /* Speech bubble */
   #speech-bubble {
-    position: fixed;
-    bottom: 22%;
-    left: 50%;
+    position: fixed; bottom: 22%; left: 50%;
     transform: translate(-50%, 20px) scale(0.92);
     max-width: min(560px, 84vw);
     padding: 22px 30px;
     background: linear-gradient(160deg, rgba(14,16,28,0.94), rgba(8,9,18,0.94));
     border: 1px solid rgba(212,175,55,0.55);
     border-radius: 14px;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 500;
+    font-family: 'Rajdhani', sans-serif; font-weight: 500;
     font-size: clamp(15px, 1.7vw, 19px);
-    line-height: 1.5;
-    color: #f4f6fb;
-    letter-spacing: 0.02em;
-    box-shadow:
-      0 0 30px rgba(212,175,55,0.28),
-      0 0 80px rgba(176,108,255,0.18),
-      inset 0 0 24px rgba(212,175,55,0.06);
-    opacity: 0;
-    pointer-events: none;
+    line-height: 1.5; color: #f4f6fb;
+    box-shadow: 0 0 30px rgba(212,175,55,0.28), 0 0 80px rgba(176,108,255,0.18), inset 0 0 24px rgba(212,175,55,0.06);
+    opacity: 0; pointer-events: none;
     transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2,0.9,0.3,1.2);
     z-index: 40;
   }
-  #speech-bubble.show {
-    opacity: 1;
-    transform: translate(-50%, 0) scale(1);
-  }
+  #speech-bubble.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
   #speech-bubble::after {
-    content: '';
-    position: absolute;
-    bottom: -11px;
-    left: 50%;
+    content: ''; position: absolute;
+    bottom: -11px; left: 50%;
     transform: translateX(-50%) rotate(45deg);
     width: 20px; height: 20px;
     background: rgba(14,16,28,0.94);
     border-right: 1px solid rgba(212,175,55,0.55);
     border-bottom: 1px solid rgba(212,175,55,0.55);
   }
-
-  /* Search UI */
   #search-ui {
-    position: fixed;
-    bottom: 8%;
-    left: 50%;
+    position: fixed; bottom: 8%; left: 50%;
     transform: translate(-50%, 30px);
     width: min(620px, 88vw);
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    display: flex; align-items: center; gap: 12px;
     padding: 10px 10px 10px 22px;
     background: rgba(10, 12, 22, 0.82);
     border: 1px solid rgba(212,175,55,0.45);
     border-radius: 60px;
     backdrop-filter: blur(14px);
-    box-shadow:
-      0 0 30px rgba(212,175,55,0.22),
-      0 0 80px rgba(176,108,255,0.15),
-      inset 0 0 24px rgba(212,175,55,0.05);
-    opacity: 0;
-    pointer-events: none;
+    box-shadow: 0 0 30px rgba(212,175,55,0.22), 0 0 80px rgba(176,108,255,0.15), inset 0 0 24px rgba(212,175,55,0.05);
+    opacity: 0; pointer-events: none;
     transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2,0.9,0.3,1.1);
     z-index: 35;
   }
-  #search-ui.show {
-    opacity: 1;
-    transform: translate(-50%, 0);
-    pointer-events: auto;
-  }
-  #search-ui .search-icon {
-    width: 20px; height: 20px;
-    flex-shrink: 0;
-    opacity: 0.75;
-    color: var(--gold-soft);
-  }
+  #search-ui.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  #search-ui .search-icon { width: 20px; height: 20px; flex-shrink: 0; opacity: 0.75; color: var(--gold-soft); }
   #search-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #fff;
-    font-family: 'Rajdhani', sans-serif;
-    font-weight: 500;
-    font-size: 17px;
-    letter-spacing: 0.04em;
-    padding: 12px 0;
+    flex: 1; background: transparent; border: none; outline: none;
+    color: #fff; font-family: 'Rajdhani', sans-serif; font-weight: 500;
+    font-size: 17px; letter-spacing: 0.04em; padding: 12px 0;
   }
   #search-input::placeholder { color: rgba(200, 206, 220, 0.5); }
   #search-go {
-    flex-shrink: 0;
-    cursor: pointer;
+    flex-shrink: 0; cursor: pointer;
     background: linear-gradient(135deg, var(--gold-soft), var(--gold));
-    border: none;
-    color: #0a0a12;
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    font-size: 11px;
-    letter-spacing: 0.3em;
-    text-indent: 0.3em;
-    padding: 14px 28px;
-    border-radius: 40px;
+    border: none; color: #0a0a12;
+    font-family: 'Orbitron', sans-serif; font-weight: 700;
+    font-size: 11px; letter-spacing: 0.3em; text-indent: 0.3em;
+    padding: 14px 28px; border-radius: 40px;
     box-shadow: 0 0 20px rgba(212,175,55,0.55);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
-  #search-go:hover {
-    transform: scale(1.04);
-    box-shadow: 0 0 32px rgba(212,175,55,0.85);
-  }
-
-  /* ============================================================
-     SCENE 3 — COCKPIT WARP OVERLAY (vignette + scanlines)
-     ============================================================ */
+  #search-go:hover { transform: scale(1.04); box-shadow: 0 0 32px rgba(212,175,55,0.85); }
   #scene-warp-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 18;
-    pointer-events: none;
-    opacity: 0;
+    position: fixed; inset: 0; z-index: 18;
+    pointer-events: none; opacity: 0;
     transition: opacity 0.8s ease;
-    background:
-      radial-gradient(ellipse at center, transparent 40%, rgba(3,4,10,0.85) 100%);
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(3,4,10,0.85) 100%);
   }
   #scene-warp-overlay.active { opacity: 1; }
   #scene-warp-overlay::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      rgba(159, 224, 255, 0.03) 0px,
-      rgba(159, 224, 255, 0.03) 1px,
-      transparent 1px,
-      transparent 3px
-    );
-    mix-blend-mode: screen;
-    opacity: 0.6;
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(159, 224, 255, 0.03) 0px, rgba(159, 224, 255, 0.03) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode: screen; opacity: 0.6;
   }
-
-  /* ============================================================
-     SCENE 4 — STORE (ice planet) — product grid
-     ============================================================ */
   #scene-store {
-    position: fixed;
-    inset: 0;
-    z-index: 25;
-    display: flex;
-    flex-direction: column;
-    opacity: 0;
-    pointer-events: none;
+    position: fixed; inset: 0; z-index: 25;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
     transition: opacity 1s ease;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow-y: auto; overflow-x: hidden;
     padding: 60px 5vw 80px;
     scrollbar-width: thin;
     scrollbar-color: rgba(212,175,55,0.5) transparent;
   }
   #scene-store.active { opacity: 1; pointer-events: auto; }
   #scene-store::-webkit-scrollbar { width: 8px; }
-  #scene-store::-webkit-scrollbar-thumb {
-    background: rgba(212,175,55,0.5);
-    border-radius: 8px;
-  }
-
-  #scene-store .store-head {
-    text-align: center;
-    margin-bottom: 48px;
-    flex-shrink: 0;
-  }
+  #scene-store::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.5); border-radius: 8px; }
+  #scene-store .store-head { text-align: center; margin-bottom: 48px; flex-shrink: 0; }
   #scene-store .store-head h2 {
-    font-family: 'Cinzel', serif;
-    font-weight: 700;
+    font-family: 'Cinzel', serif; font-weight: 700;
     font-size: clamp(28px, 4.4vw, 54px);
-    letter-spacing: 0.18em;
-    text-indent: 0.18em;
-    color: #fff;
-    text-shadow:
-      0 0 24px rgba(159,224,255,0.7),
-      0 0 70px rgba(212,175,55,0.35);
+    letter-spacing: 0.18em; text-indent: 0.18em; color: #fff;
+    text-shadow: 0 0 24px rgba(159,224,255,0.7), 0 0 70px rgba(212,175,55,0.35);
     margin-bottom: 12px;
   }
   #scene-store .store-head p {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 11px;
-    letter-spacing: 0.5em;
-    text-indent: 0.5em;
-    color: var(--ice);
-    opacity: 0.8;
-    text-transform: uppercase;
+    font-family: 'Orbitron', sans-serif; font-size: 11px;
+    letter-spacing: 0.5em; text-indent: 0.5em;
+    color: var(--ice); opacity: 0.8; text-transform: uppercase;
   }
-
   #product-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     gap: 26px;
-    max-width: 1400px;
-    width: 100%;
-    margin: 0 auto;
-    flex-shrink: 0;
+    max-width: 1400px; width: 100%; margin: 0 auto; flex-shrink: 0;
   }
-
   .product-card {
     position: relative;
     background: linear-gradient(160deg, rgba(14,18,32,0.78), rgba(6,8,16,0.86));
     border: 1px solid rgba(159,224,255,0.22);
-    border-radius: 14px;
-    overflow: hidden;
+    border-radius: 14px; overflow: hidden;
     backdrop-filter: blur(10px);
-    box-shadow:
-      0 0 24px rgba(159,224,255,0.08),
-      inset 0 0 24px rgba(159,224,255,0.03);
-    transition: transform 0.35s cubic-bezier(0.2,0.9,0.3,1.1),
-                border-color 0.35s ease,
-                box-shadow 0.35s ease;
-    opacity: 0;
-    transform: translateY(28px);
+    box-shadow: 0 0 24px rgba(159,224,255,0.08), inset 0 0 24px rgba(159,224,255,0.03);
+    transition: transform 0.35s cubic-bezier(0.2,0.9,0.3,1.1), border-color 0.35s ease, box-shadow 0.35s ease;
+    opacity: 0; transform: translateY(28px);
     animation: cardRise 0.7s cubic-bezier(0.2,0.9,0.3,1.1) forwards;
   }
-  @keyframes cardRise {
-    to { opacity: 1; transform: translateY(0); }
-  }
+  @keyframes cardRise { to { opacity: 1; transform: translateY(0); } }
   .product-card:hover {
     transform: translateY(-6px);
     border-color: rgba(212,175,55,0.65);
-    box-shadow:
-      0 0 40px rgba(212,175,55,0.35),
-      0 0 90px rgba(159,224,255,0.15),
-      inset 0 0 30px rgba(212,175,55,0.05);
+    box-shadow: 0 0 40px rgba(212,175,55,0.35), 0 0 90px rgba(159,224,255,0.15), inset 0 0 30px rgba(212,175,55,0.05);
   }
-
   .product-card .card-img-wrap {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 4 / 5;
-    overflow: hidden;
+    position: relative; width: 100%; aspect-ratio: 4 / 5; overflow: hidden;
     background: radial-gradient(ellipse at center, #10141f, #05060c);
   }
   .product-card .card-img-wrap img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 100%; height: 100%; object-fit: cover;
     transition: transform 0.7s cubic-bezier(0.2,0.9,0.3,1.1);
   }
   .product-card:hover .card-img-wrap img { transform: scale(1.08); }
-
-  .product-card .card-body {
-    padding: 18px 20px 22px;
-  }
+  .product-card .card-body { padding: 18px 20px 22px; }
   .product-card .card-name {
-    font-family: 'Cinzel', serif;
-    font-weight: 600;
-    font-size: 17px;
-    letter-spacing: 0.06em;
-    color: #fff;
-    margin-bottom: 8px;
-    line-height: 1.25;
+    font-family: 'Cinzel', serif; font-weight: 600;
+    font-size: 17px; letter-spacing: 0.06em;
+    color: #fff; margin-bottom: 8px; line-height: 1.25;
   }
   .product-card .card-desc {
-    font-family: 'Rajdhani', sans-serif;
-    font-size: 13px;
-    font-weight: 400;
-    line-height: 1.45;
-    color: var(--muted);
+    font-family: 'Rajdhani', sans-serif; font-size: 13px;
+    font-weight: 400; line-height: 1.45; color: var(--muted);
     margin-bottom: 14px;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .product-card .card-foot {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-  }
+  .product-card .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   .product-card .card-price {
-    font-family: 'Orbitron', sans-serif;
-    font-weight: 700;
-    font-size: 16px;
-    letter-spacing: 0.05em;
-    color: var(--gold-soft);
-    text-shadow: 0 0 12px rgba(212,175,55,0.6);
+    font-family: 'Orbitron', sans-serif; font-weight: 700;
+    font-size: 16px; letter-spacing: 0.05em;
+    color: var(--gold-soft); text-shadow: 0 0 12px rgba(212,175,55,0.6);
   }
-  .product-card .card-price::before {
-    content: '$';
-    font-size: 11px;
-    margin-right: 2px;
-    opacity: 0.8;
-  }
-  .product-card .card-sizes {
-    display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
-  }
+  .product-card .card-sizes { display: flex; gap: 4px; flex-wrap: wrap; }
   .product-card .card-sizes span {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 9px;
-    letter-spacing: 0.08em;
-    color: var(--ice);
+    font-family: 'Orbitron', sans-serif; font-size: 9px;
+    letter-spacing: 0.08em; color: var(--ice);
     border: 1px solid rgba(159,224,255,0.35);
-    border-radius: 4px;
-    padding: 2px 6px;
-    opacity: 0.85;
+    border-radius: 4px; padding: 2px 6px; opacity: 0.85;
   }
-
-  .product-card.skeleton .card-img-wrap {
-    background: linear-gradient(110deg, #10141f 8%, #1a1f2e 18%, #10141f 33%);
-    background-size: 200% 100%;
-    animation: skeletonShimmer 1.6s linear infinite;
-  }
-  @keyframes skeletonShimmer {
-    to { background-position-x: -200%; }
-  }
-
   #store-loading {
-    width: 100%;
-    text-align: center;
-    padding: 60px 0;
-    font-family: 'Orbitron', sans-serif;
-    font-size: 12px;
-    letter-spacing: 0.4em;
-    color: var(--ice);
-    text-transform: uppercase;
-    opacity: 0.8;
+    width: 100%; text-align: center; padding: 60px 0;
+    font-family: 'Orbitron', sans-serif; font-size: 12px;
+    letter-spacing: 0.4em; color: var(--ice);
+    text-transform: uppercase; opacity: 0.8;
   }
   #store-loading.hidden { display: none; }
-
-  /* ============================================================
-     WHITE FLASH (portal transition)
-     ============================================================ */
   #flash {
-    position: fixed;
-    inset: 0;
-    z-index: 90;
-    background: #fff;
-    opacity: 0;
-    pointer-events: none;
+    position: fixed; inset: 0; z-index: 90;
+    background: #fff; opacity: 0; pointer-events: none;
     transition: opacity 0.15s ease;
   }
   #flash.on { opacity: 1; }
-
-  /* ============================================================
-     FADE-TO-BLACK (between scenes)
-     ============================================================ */
   #fade {
-    position: fixed;
-    inset: 0;
-    z-index: 80;
-    background: #000;
-    opacity: 1;
-    pointer-events: none;
+    position: fixed; inset: 0; z-index: 80;
+    background: #000; opacity: 1; pointer-events: none;
     transition: opacity 1s ease;
   }
   #fade.clear { opacity: 0; }
-
-  /* ============================================================
-     HIDDEN UTILITY
-     ============================================================ */
   .hidden { display: none !important; }
 </style>
 </head>
 <body>
 
-  <!-- ===== THREE.JS CANVAS ===== -->
-  <canvas id="webgl"></canvas>
+<canvas id="webgl"></canvas>
 
-  <!-- ===== LOADER (Scene 0) ===== -->
-  <div id="loader">
-    <div class="logo-wrap">
-      <img src="assets/vaastorelogo.png" alt="VAA Store" />
-    </div>
-    <div class="brand">VAA STORE</div>
-    <div class="bar-track"><div class="bar-fill" id="load-bar"></div></div>
-    <div class="status" id="load-status">Initializing…</div>
+<div id="loader">
+  <div class="logo-wrap">
+    <img src="assets/vaastorelogo.png" alt="VAA Store" />
   </div>
+  <div class="brand">VAA STORE</div>
+  <div class="bar-track"><div class="bar-fill" id="load-bar"></div></div>
+  <div class="status" id="load-status">Initializing…</div>
+</div>
 
-  <!-- ===== SCENE 1 — GATE UI ===== -->
-  <div id="scene-gate">
-    <div class="gate-title">VAA STORE</div>
-    <div class="gate-sub">Beyond the gate lies everything</div>
-    <button id="enter-btn">ENTER STORE</button>
+<div id="scene-gate">
+  <div class="gate-title">VAA STORE</div>
+  <div class="gate-sub">Beyond the gate lies everything</div>
+  <button id="enter-btn">ENTER STORE</button>
+</div>
+
+<div id="scene-carpet">
+  <div id="speech-bubble"></div>
+  <div id="search-ui">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="7"></circle>
+      <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+    </svg>
+    <input id="search-input" type="text" placeholder="What product are you looking for?" autocomplete="off" spellcheck="false" />
+    <button id="search-go">GO</button>
   </div>
+</div>
 
-  <!-- ===== SCENE 2 — CARPET / LADY / SEARCH ===== -->
-  <div id="scene-carpet">
-    <div id="speech-bubble"></div>
-    <div id="search-ui">
-      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="7"></circle>
-        <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-      </svg>
-      <input id="search-input" type="text" placeholder="What product are you looking for?" autocomplete="off" spellcheck="false" />
-      <button id="search-go">GO</button>
-    </div>
+<div id="scene-warp-overlay"></div>
+
+<div id="scene-store">
+  <div class="store-head">
+    <h2>THE ICE COLLECTION</h2>
+    <p>Curated from across the void</p>
   </div>
+  <div id="store-loading">Loading products…</div>
+  <div id="product-grid"></div>
+</div>
 
-  <!-- ===== SCENE 3 — WARP OVERLAY ===== -->
-  <div id="scene-warp-overlay"></div>
+<div id="flash"></div>
+<div id="fade"></div>
 
-  <!-- ===== SCENE 4 — STORE ===== -->
-  <div id="scene-store">
-    <div class="store-head">
-      <h2>THE ICE COLLECTION</h2>
-      <p>Curated from across the void</p>
-    </div>
-    <div id="store-loading">Loading products…</div>
-    <div id="product-grid"></div>
-  </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- ===== TRANSITION LAYERS ===== -->
-  <div id="flash"></div>
-  <div id="fade"></div>
-
-  <!-- ===== LIBRARIES ===== -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- ===== APP SCRIPT (Parts 2 & 3 paste inside) ===== -->
-  <script>
-  /* PART 2 SCRIPT GOES HERE */
-      /* ============================================================
+<script>/* ============================================================
    VAA STORE — PART 2
-   Three.js core, composer/bloom, camera rig,
+   Config, Supabase client, Three.js core, composer/bloom,
    Scene 0 (particle logo), Scene 1 (gate + portal + flash)
    ============================================================ */
 
-/* ---------- GLOBAL STATE ---------- */
-const STATE = {
-  scene: 'loader',        // loader | logo | gate | portal | carpet | ship | warp | store
-  loaded: false,
-  logoMorphed: false,
-  products: [],
-  searchQuery: '',
-};
+const SUPABASE_URL = 'https://gynphsibkcrivosuamxp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5bnBoc2lia2NyaXZvc3VhbXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4OTA0NzQsImV4cCI6MjEwNTQ2NjQ3NH0.GNKrZgJFj4496-kPzfdc2Fzv3bS8YO6CLrWPV4PyucM';
 
 const ASSETS = {
   logo:      'assets/vaastorelogo.png',
@@ -701,15 +401,19 @@ const ASSETS = {
   business:  'assets/buisnessman.png',
   shopper1:  'assets/shopper1.png',
   shopper2:  'assets/shopper2.png',
-  whoosh:    'assets/wohh.mp4',
+  whoosh:    'assets/wohh.mp4'
 };
 
-const SUPABASE_URL = 'https://gynphsibkcrivosuamxp.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd5bnBoc2lia2NyaXZvc3VhbXhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4OTA0NzQsImV4cCI6MjEwNTQ2NjQ3NH0.GNKrZgJFj4496-kPzfdc2Fzv3bS8YO6CLrWPV4PyucM';
+const STATE = {
+  scene: 'loader',
+  loaded: false,
+  logoTargetsReady: false,
+  logoMorphed: false,
+  products: [],
+  searchQuery: ''
+};
 
-/* ---------- THREE.JS CORE ---------- */
 let renderer, composer, bloomPass, camera, clock;
-let sceneRoot;
 let sceneLogo, sceneGate, sceneCarpet, sceneShip, sceneWarp, sceneStore;
 let activeScene;
 
@@ -717,112 +421,30 @@ const canvas = document.getElementById('webgl');
 
 function initRenderer() {
   renderer = new THREE.WebGLRenderer({
-    canvas,
+    canvas: canvas,
     antialias: true,
     alpha: false,
-    powerPreference: 'high-performance',
+    powerPreference: 'high-performance'
   });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x030308, 1);
-  renderer.outputEncoding = THREE.sRGBEncoding;
 
   camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 2000);
   camera.position.set(0, 0, 6);
 
   clock = new THREE.Clock();
 
-  // Composer with bloom
   composer = new THREE.EffectComposer(renderer);
-  composer.addPass(new THREE.RenderPass(sceneRoot, camera));
+  composer.addPass(new THREE.RenderPass(sceneLogo, camera));
 
   bloomPass = new THREE.UnrealBloomPass(
     new THREE.Vector2(window.innerWidth, window.innerHeight),
-    1.1,   // strength
-    0.7,   // radius
-    0.55   // threshold
+    1.1,
+    0.7,
+    0.55
   );
   composer.addPass(bloomPass);
-}
-
-/* ---------- SCENE FACTORIES ---------- */
-function createSceneLogo() {
-  const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x030308, 0.06);
-
-  // Ambient subtle
-  scene.add(new THREE.AmbientLight(0x223355, 0.6));
-
-  // The particle system — 10,000 points
-  const count = 10000;
-  const positions = new Float32Array(count * 3);
-  const colors = new Float32Array(count * 3);
-  const targets = new Float32Array(count * 3);
-
-  const cGold = new THREE.Color(0xd4af37);
-  const cPurple = new THREE.Color(0xb06cff);
-  const cGreen = new THREE.Color(0x7dffb0);
-  const cWhite = new THREE.Color(0xffffff);
-
-  for (let i = 0; i < count; i++) {
-    // Start chaotic in a sphere
-    const r = 8 + Math.random() * 22;
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(2 * Math.random() - 1);
-    positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
-    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-    positions[i * 3 + 2] = r * Math.cos(phi);
-
-    // Targets: sample the logo image on an offscreen canvas
-    targets[i * 3]     = 0;
-    targets[i * 3 + 1] = 0;
-    targets[i * 3 + 2] = 0;
-
-    // Color mix
-    const t = Math.random();
-    let c;
-    if (t < 0.45) c = cGold.clone().lerp(cWhite, Math.random() * 0.5);
-    else if (t < 0.7) c = cPurple.clone().lerp(cWhite, Math.random() * 0.4);
-    else if (t < 0.9) c = cGreen.clone().lerp(cWhite, Math.random() * 0.4);
-    else c = cWhite.clone();
-    colors[i * 3]     = c.r;
-    colors[i * 3 + 1] = c.g;
-    colors[i * 3 + 2] = c.b;
-  }
-
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  geo.userData = { targets, basePositions: positions.slice(0) };
-
-  const mat = new THREE.PointsMaterial({
-    size: 0.09,
-    map: makeSoftDotTexture(),
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.92,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    sizeAttenuation: true,
-  });
-
-  const points = new THREE.Points(geo, mat);
-  points.name = 'logoParticles';
-  scene.add(points);
-
-  // Load logo image and build target positions
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    buildLogoTargets(img, geo, count);
-  };
-  img.onerror = () => {
-    // Fallback: sphere target
-    buildSphereTargets(geo, count);
-  };
-  img.src = ASSETS.logo;
-
-  return scene;
 }
 
 function makeSoftDotTexture() {
@@ -839,228 +461,6 @@ function makeSoftDotTexture() {
   const tex = new THREE.CanvasTexture(c);
   tex.needsUpdate = true;
   return tex;
-}
-
-function buildLogoTargets(img, geo, count) {
-  const w = 220;
-  const h = 220;
-  const c = document.createElement('canvas');
-  c.width = w; c.height = h;
-  const ctx = c.getContext('2d');
-  ctx.drawImage(img, 0, 0, w, h);
-  const data = ctx.getImageData(0, 0, w, h).data;
-
-  // Collect bright pixels
-  const bright = [];
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const idx = (y * w + x) * 4;
-      const a = data[idx + 3];
-      const r = data[idx];
-      const g = data[idx + 1];
-      const b = data[idx + 2];
-      const lum = (r * 0.299 + g * 0.587 + b * 0.114) * (a / 255);
-      if (lum > 40 && a > 30) {
-        bright.push({ x, y, lum });
-      }
-    }
-  }
-
-  const targets = geo.userData.targets;
-  const scale = 8 / Math.max(w, h); // logo roughly 8 world units
-  const offsetX = -w * scale * 0.5;
-  const offsetY = -h * scale * 0.5;
-
-  if (bright.length === 0) {
-    buildSphereTargets(geo, count);
-    return;
-  }
-
-  for (let i = 0; i < count; i++) {
-    const b = bright[i % bright.length];
-    // Add a little scatter so it's not a perfect 1:1 fill
-    const jx = (Math.random() - 0.5) * 1.2;
-    const jy = (Math.random() - 0.5) * 1.2;
-    const jz = (Math.random() - 0.5) * 1.4;
-    targets[i * 3]     = offsetX + b.x * scale + jx;
-    targets[i * 3 + 1] = -(offsetY + b.y * scale) + jy;
-    targets[i * 3 + 2] = jz;
-  }
-  geo.userData.targets = targets;
-  STATE.logoTargetsReady = true;
-}
-
-function buildSphereTargets(geo, count) {
-  const targets = geo.userData.targets;
-  const R = 3.2;
-  for (let i = 0; i < count; i++) {
-    const theta = Math.random() * Math.PI * 2;
-    const phi = Math.acos(2 * Math.random() - 1);
-    targets[i * 3]     = R * Math.sin(phi) * Math.cos(theta);
-    targets[i * 3 + 1] = R * Math.sin(phi) * Math.sin(theta);
-    targets[i * 3 + 2] = R * Math.cos(phi);
-  }
-  geo.userData.targets = targets;
-  STATE.logoTargetsReady = true;
-}
-
-/* ---------- SCENE 1 — GATE ---------- */
-function createSceneGate() {
-  const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x030308, 0.045);
-
-  // Starfield backdrop
-  scene.add(makeStarfield(1500, 120));
-
-  // Ambient
-  scene.add(new THREE.AmbientLight(0x334466, 0.8));
-  const key = new THREE.DirectionalLight(0xd4af37, 1.3);
-  key.position.set(2, 3, 5);
-  scene.add(key);
-  const rim = new THREE.PointLight(0xb06cff, 2.0, 40);
-  rim.position.set(-6, 2, -4);
-  scene.add(rim);
-
-  // Gate group
-  const gateGroup = new THREE.Group();
-  gateGroup.position.set(0, 0, 0);
-
-  const gateWidth = 5.0;
-  const gateHeight = 8.0;
-
-  const leftMat = new THREE.MeshBasicMaterial({ color: 0x223344, transparent: true, opacity: 0.0 });
-  const rightMat = new THREE.MeshBasicMaterial({ color: 0x223344, transparent: true, opacity: 0.0 });
-
-  const leftGeo = new THREE.PlaneGeometry(gateWidth, gateHeight);
-  const rightGeo = new THREE.PlaneGeometry(gateWidth, gateHeight);
-
-  const leftDoor = new THREE.Mesh(leftGeo, leftMat);
-  leftDoor.position.set(-gateWidth / 2, 0, 0);
-  leftDoor.name = 'gateLeft';
-
-  const rightDoor = new THREE.Mesh(rightGeo, rightMat);
-  rightDoor.position.set(gateWidth / 2, 0, 0);
-  rightDoor.name = 'gateRight';
-
-  gateGroup.add(leftDoor, rightDoor);
-  scene.add(gateGroup);
-
-  // Load textures for doors with fallback
-  loadTextureWithFallback(ASSETS.gateLeft, ASSETS.gateLeftJ, (tex) => {
-    leftMat.map = tex;
-    leftMat.opacity = 1;
-    leftMat.color.setHex(0xffffff);
-    leftMat.needsUpdate = true;
-  });
-  loadTextureWithFallback(ASSETS.gateRight, ASSETS.gateRightJ, (tex) => {
-    rightMat.map = tex;
-    rightMat.opacity = 1;
-    rightMat.color.setHex(0xffffff);
-    rightMat.needsUpdate = true;
-  });
-
-  // Portal ring (torus)
-  const portalGroup = new THREE.Group();
-  portalGroup.position.set(0, 0, -0.6);
-  portalGroup.name = 'portalGroup';
-
-  const ringGeo = new THREE.TorusGeometry(3.6, 0.18, 24, 96);
-  const ringMat = new THREE.MeshBasicMaterial({
-    color: 0xd4af37,
-    transparent: true,
-    opacity: 0.9,
-  });
-  const ring = new THREE.Mesh(ringGeo, ringMat);
-  portalGroup.add(ring);
-
-  const innerRingGeo = new THREE.TorusGeometry(3.0, 0.06, 16, 96);
-  const innerRingMat = new THREE.MeshBasicMaterial({
-    color: 0xb06cff,
-    transparent: true,
-    opacity: 0.8,
-  });
-  const innerRing = new THREE.Mesh(innerRingGeo, innerRingMat);
-  portalGroup.add(innerRing);
-
-  // Portal vortex plane
-  const vortexGeo = new THREE.CircleGeometry(3.4, 64);
-  const vortexMat = new THREE.MeshBasicMaterial({
-    color: 0x9fe0ff,
-    transparent: true,
-    opacity: 0.0,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-    side: THREE.DoubleSide,
-  });
-  const vortex = new THREE.Mesh(vortexGeo, vortexMat);
-  vortex.name = 'portalVortex';
-  portalGroup.add(vortex);
-
-  // Load portal image to tint
-  const portalTex = new THREE.TextureLoader().load(ASSETS.portal, (t) => {
-    t.encoding = THREE.sRGBEncoding;
-    vortexMat.map = t;
-    vortexMat.needsUpdate = true;
-  });
-  portalTex.wrapS = portalTex.wrapT = THREE.RepeatWrapping;
-
-  scene.add(portalGroup);
-
-  // Glow sprites behind portal
-  const glowTex = makeRadialGlowTexture();
-  const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: glowTex,
-    color: 0xb06cff,
-    transparent: true,
-    opacity: 0.0,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false,
-  }));
-  glowSprite.position.set(0, 0, -1.5);
-  glowSprite.scale.set(14, 14, 1);
-  glowSprite.name = 'portalGlow';
-  scene.add(glowSprite);
-
-  // Ground plane hint
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(80, 80),
-    new THREE.MeshBasicMaterial({ color: 0x05060c })
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -4.2;
-  scene.add(ground);
-
-  return scene;
-}
-
-function makeStarfield(count, spread) {
-  const geo = new THREE.BufferGeometry();
-  const pos = new Float32Array(count * 3);
-  const col = new Float32Array(count * 3);
-  const c = new THREE.Color();
-  for (let i = 0; i < count; i++) {
-    pos[i * 3]     = (Math.random() - 0.5) * spread * 2;
-    pos[i * 3 + 1] = (Math.random() - 0.5) * spread * 2;
-    pos[i * 3 + 2] = (Math.random() - 0.5) * spread * 2;
-    const t = Math.random();
-    if (t < 0.7) c.setHex(0xffffff);
-    else if (t < 0.88) c.setHex(0xd4af37);
-    else c.setHex(0xb06cff);
-    col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
-  }
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const mat = new THREE.PointsMaterial({
-    size: 0.22,
-    map: makeSoftDotTexture(),
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.9,
-    depthWrite: false,
-    blending: THREE.AdditiveBlending,
-    sizeAttenuation: true,
-  });
-  return new THREE.Points(geo, mat);
 }
 
 function makeRadialGlowTexture() {
@@ -1080,66 +480,294 @@ function makeRadialGlowTexture() {
   return tex;
 }
 
+function makeStarfield(count, spread) {
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+  const c = new THREE.Color();
+  for (let i = 0; i < count; i++) {
+    pos[i * 3]     = (Math.random() - 0.5) * spread * 2;
+    pos[i * 3 + 1] = (Math.random() - 0.5) * spread * 2;
+    pos[i * 3 + 2] = (Math.random() - 0.5) * spread * 2;
+    const t = Math.random();
+    if (t < 0.7) c.setHex(0xffffff);
+    else if (t < 0.88) c.setHex(0xd4af37);
+    else c.setHex(0xb06cff);
+    col[i * 3] = c.r;
+    col[i * 3 + 1] = c.g;
+    col[i * 3 + 2] = c.b;
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const mat = new THREE.PointsMaterial({
+    size: 0.22,
+    map: makeSoftDotTexture(),
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.9,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true
+  });
+  return new THREE.Points(geo, mat);
+}
+
 function loadTextureWithFallback(urlA, urlB, onLoad) {
   const loader = new THREE.TextureLoader();
   loader.load(
     urlA,
-    (tex) => { tex.encoding = THREE.sRGBEncoding; onLoad(tex); },
+    function(tex) { tex.encoding = THREE.sRGBEncoding; onLoad(tex); },
     undefined,
-    () => {
+    function() {
       loader.load(
         urlB,
-        (tex) => { tex.encoding = THREE.sRGBEncoding; onLoad(tex); },
+        function(tex) { tex.encoding = THREE.sRGBEncoding; onLoad(tex); },
         undefined,
-        () => { /* neither exists; leave material as-is */ }
+        function() {}
       );
     }
   );
 }
 
-/* ---------- CAMERA RIG HELPERS ---------- */
-function resetCamera() {
-  camera.position.set(0, 0, 6);
-  camera.rotation.set(0, 0, 0);
-  camera.fov = 60;
-  camera.updateProjectionMatrix();
-}
+/* ---------- SCENE 0 — PARTICLE LOGO ---------- */
+function createSceneLogo() {
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x030308, 0.06);
+  scene.add(new THREE.AmbientLight(0x223355, 0.6));
 
-/* ---------- MASTER ANIMATE LOOP ---------- */
-function animate() {
-  requestAnimationFrame(animate);
-  const dt = clock.getDelta();
-  const t = clock.elapsedTime;
+  const count = 10000;
+  const positions = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
+  const targets = new Float32Array(count * 3);
 
-  // Animate whichever scene is active
-  if (activeScene === sceneLogo) animateLogo(t, dt);
-  else if (activeScene === sceneGate) animateGate(t, dt);
-  else if (activeScene === sceneCarpet && typeof animateCarpet === 'function') animateCarpet(t, dt);
-  else if (activeScene === sceneShip && typeof animateShip === 'function') animateShip(t, dt);
-  else if (activeScene === sceneWarp && typeof animateWarp === 'function') animateWarp(t, dt);
-  else if (activeScene === sceneStore && typeof animateStore === 'function') animateStore(t, dt);
+  const cGold = new THREE.Color(0xd4af37);
+  const cPurple = new THREE.Color(0xb06cff);
+  const cGreen = new THREE.Color(0x7dffb0);
+  const cWhite = new THREE.Color(0xffffff);
 
-  // Render
-  if (activeScene) {
-    composer.render();
+  for (let i = 0; i < count; i++) {
+    const r = 8 + Math.random() * 22;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    positions[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+    positions[i * 3 + 2] = r * Math.cos(phi);
+
+    targets[i * 3]     = 0;
+    targets[i * 3 + 1] = 0;
+    targets[i * 3 + 2] = 0;
+
+    const t = Math.random();
+    let c;
+    if (t < 0.45) c = cGold.clone().lerp(cWhite, Math.random() * 0.5);
+    else if (t < 0.7) c = cPurple.clone().lerp(cWhite, Math.random() * 0.4);
+    else if (t < 0.9) c = cGreen.clone().lerp(cWhite, Math.random() * 0.4);
+    else c = cWhite.clone();
+    colors[i * 3]     = c.r;
+    colors[i * 3 + 1] = c.g;
+    colors[i * 3 + 2] = c.b;
   }
+
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.userData = { targets: targets };
+
+  const mat = new THREE.PointsMaterial({
+    size: 0.09,
+    map: makeSoftDotTexture(),
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.92,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    sizeAttenuation: true
+  });
+
+  const points = new THREE.Points(geo, mat);
+  points.name = 'logoParticles';
+  scene.add(points);
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function() { buildLogoTargets(img, geo, count); };
+  img.onerror = function() { buildSphereTargets(geo, count); };
+  img.src = ASSETS.logo;
+
+  return scene;
 }
 
-/* ---------- SCENE 0 ANIMATION ---------- */
-let logoTimeline = null;
-let logoMorphStart = 0;
+function buildLogoTargets(img, geo, count) {
+  const w = 220;
+  const h = 220;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+  const data = ctx.getImageData(0, 0, w, h).data;
 
+  const bright = [];
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = (y * w + x) * 4;
+      const a = data[idx + 3];
+      const r = data[idx];
+      const g = data[idx + 1];
+      const b = data[idx + 2];
+      const lum = (r * 0.299 + g * 0.587 + b * 0.114) * (a / 255);
+      if (lum > 40 && a > 30) bright.push({ x: x, y: y });
+    }
+  }
+
+  const targets = geo.userData.targets;
+  const scale = 8 / Math.max(w, h);
+  const offsetX = -w * scale * 0.5;
+  const offsetY = -h * scale * 0.5;
+
+  if (bright.length === 0) { buildSphereTargets(geo, count); return; }
+
+  for (let i = 0; i < count; i++) {
+    const b = bright[i % bright.length];
+    const jx = (Math.random() - 0.5) * 1.2;
+    const jy = (Math.random() - 0.5) * 1.2;
+    const jz = (Math.random() - 0.5) * 1.4;
+    targets[i * 3]     = offsetX + b.x * scale + jx;
+    targets[i * 3 + 1] = -(offsetY + b.y * scale) + jy;
+    targets[i * 3 + 2] = jz;
+  }
+  STATE.logoTargetsReady = true;
+}
+
+function buildSphereTargets(geo, count) {
+  const targets = geo.userData.targets;
+  const R = 3.2;
+  for (let i = 0; i < count; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    targets[i * 3]     = R * Math.sin(phi) * Math.cos(theta);
+    targets[i * 3 + 1] = R * Math.sin(phi) * Math.sin(theta);
+    targets[i * 3 + 2] = R * Math.cos(phi);
+  }
+  STATE.logoTargetsReady = true;
+}
+
+/* ---------- SCENE 1 — GATE ---------- */
+function createSceneGate() {
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x030308, 0.045);
+
+  scene.add(makeStarfield(1500, 120));
+  scene.add(new THREE.AmbientLight(0x334466, 0.8));
+
+  const key = new THREE.DirectionalLight(0xd4af37, 1.3);
+  key.position.set(2, 3, 5);
+  scene.add(key);
+
+  const rim = new THREE.PointLight(0xb06cff, 2.0, 40);
+  rim.position.set(-6, 2, -4);
+  scene.add(rim);
+
+  const gateGroup = new THREE.Group();
+  const gateWidth = 5.0;
+  const gateHeight = 8.0;
+
+  const leftMat = new THREE.MeshBasicMaterial({ color: 0x223344, transparent: true, opacity: 0.0 });
+  const rightMat = new THREE.MeshBasicMaterial({ color: 0x223344, transparent: true, opacity: 0.0 });
+
+  const leftDoor = new THREE.Mesh(new THREE.PlaneGeometry(gateWidth, gateHeight), leftMat);
+  leftDoor.position.set(-gateWidth / 2, 0, 0);
+  leftDoor.name = 'gateLeft';
+
+  const rightDoor = new THREE.Mesh(new THREE.PlaneGeometry(gateWidth, gateHeight), rightMat);
+  rightDoor.position.set(gateWidth / 2, 0, 0);
+  rightDoor.name = 'gateRight';
+
+  gateGroup.add(leftDoor, rightDoor);
+  scene.add(gateGroup);
+
+  loadTextureWithFallback(ASSETS.gateLeft, ASSETS.gateLeftJ, function(tex) {
+    leftMat.map = tex;
+    leftMat.opacity = 1;
+    leftMat.color.setHex(0xffffff);
+    leftMat.needsUpdate = true;
+  });
+  loadTextureWithFallback(ASSETS.gateRight, ASSETS.gateRightJ, function(tex) {
+    rightMat.map = tex;
+    rightMat.opacity = 1;
+    rightMat.color.setHex(0xffffff);
+    rightMat.needsUpdate = true;
+  });
+
+  const portalGroup = new THREE.Group();
+  portalGroup.position.set(0, 0, -0.6);
+  portalGroup.name = 'portalGroup';
+
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(3.6, 0.18, 24, 96),
+    new THREE.MeshBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.9 })
+  );
+  portalGroup.add(ring);
+
+  const innerRing = new THREE.Mesh(
+    new THREE.TorusGeometry(3.0, 0.06, 16, 96),
+    new THREE.MeshBasicMaterial({ color: 0xb06cff, transparent: true, opacity: 0.8 })
+  );
+  portalGroup.add(innerRing);
+
+  const vortexMat = new THREE.MeshBasicMaterial({
+    color: 0x9fe0ff,
+    transparent: true,
+    opacity: 0.0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+  const vortex = new THREE.Mesh(new THREE.CircleGeometry(3.4, 64), vortexMat);
+  vortex.name = 'portalVortex';
+  portalGroup.add(vortex);
+
+  new THREE.TextureLoader().load(ASSETS.portal, function(t) {
+    t.encoding = THREE.sRGBEncoding;
+    vortexMat.map = t;
+    vortexMat.needsUpdate = true;
+  });
+
+  scene.add(portalGroup);
+
+  const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: makeRadialGlowTexture(),
+    color: 0xb06cff,
+    transparent: true,
+    opacity: 0.0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  }));
+  glowSprite.position.set(0, 0, -1.5);
+  glowSprite.scale.set(14, 14, 1);
+  glowSprite.name = 'portalGlow';
+  scene.add(glowSprite);
+
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(80, 80),
+    new THREE.MeshBasicMaterial({ color: 0x05060c })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -4.2;
+  scene.add(ground);
+
+  return scene;
+}
+
+/* ---------- ANIMATE ---------- */
 function animateLogo(t, dt) {
   const particles = sceneLogo.getObjectByName('logoParticles');
   if (!particles) return;
-
   const geo = particles.geometry;
   const pos = geo.attributes.position.array;
   const targets = geo.userData.targets;
 
-  // Only morph once targets are ready
   if (!STATE.logoTargetsReady) {
-    // Chaos orbit
     for (let i = 0; i < pos.length; i += 3) {
       pos[i + 1] += Math.sin(t * 0.8 + i) * 0.002;
     }
@@ -1148,7 +776,6 @@ function animateLogo(t, dt) {
   }
 
   if (!STATE.logoMorphed) {
-    // Smooth lerp toward targets
     const ease = 1 - Math.pow(0.001, dt);
     let done = true;
     for (let i = 0; i < pos.length; i += 3) {
@@ -1163,24 +790,20 @@ function animateLogo(t, dt) {
     geo.attributes.position.needsUpdate = true;
     if (done) {
       STATE.logoMorphed = true;
-      // Small breathe after morph
       gsap.to(camera.position, { z: 5.4, duration: 2.0, ease: 'sine.inOut' });
-      // Auto-advance to gate after a beat
-      setTimeout(() => { transitionToGate(); }, 1600);
+      setTimeout(function() { transitionToGate(); }, 1600);
     }
   } else {
-    // Gentle idle shimmer
     particles.rotation.y = Math.sin(t * 0.3) * 0.04;
   }
 }
 
-/* ---------- SCENE 1 ANIMATION ---------- */
 function animateGate(t, dt) {
   const portalGroup = sceneGate.getObjectByName('portalGroup');
   const glow = sceneGate.getObjectByName('portalGlow');
   if (portalGroup) {
     portalGroup.rotation.z = t * 0.15;
-    portalGroup.children.forEach((child, i) => {
+    portalGroup.children.forEach(function(child, i) {
       if (child.geometry && child.geometry.type === 'TorusGeometry') {
         child.rotation.z = -t * (0.25 + i * 0.1);
       }
@@ -1193,113 +816,103 @@ function animateGate(t, dt) {
   }
 }
 
-/* ---------- TRANSITIONS ---------- */
+function resetCamera() {
+  camera.position.set(0, 0, 6);
+  camera.rotation.set(0, 0, 0);
+  camera.fov = 60;
+  camera.updateProjectionMatrix();
+}
 
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  const t = clock.elapsedTime;
+
+  if (activeScene === sceneLogo) animateLogo(t, dt);
+  else if (activeScene === sceneGate) animateGate(t, dt);
+  else if (activeScene === sceneCarpet && typeof animateCarpet === 'function') animateCarpet(t, dt);
+  else if (activeScene === sceneShip && typeof animateShip === 'function') animateShip(t, dt);
+  else if (activeScene === sceneWarp && typeof animateWarp === 'function') animateWarp(t, dt);
+  else if (activeScene === sceneStore && typeof animateStore === 'function') animateStore(t, dt);
+
+  if (activeScene) {
+    const scene = activeScene;
+    if (composer.passes[0]) composer.passes[0].scene = scene;
+    composer.render();
+  }
+}
+
+/* ---------- TRANSITIONS ---------- */
 function transitionToGate() {
   if (STATE.scene === 'gate') return;
   STATE.scene = 'gate';
 
-  // Fade out loader
   const loaderEl = document.getElementById('loader');
   loaderEl.classList.add('fade-out');
-  setTimeout(() => loaderEl.classList.add('hidden'), 1000);
+  setTimeout(function() { loaderEl.classList.add('hidden'); }, 1000);
 
-  // Swap active scene
   activeScene = sceneGate;
   resetCamera();
   camera.position.set(0, 0.4, 11);
 
-  // Fade from black
   const fadeEl = document.getElementById('fade');
   fadeEl.classList.remove('clear');
 
-  // Show gate UI
-  const gateUI = document.getElementById('scene-gate');
-  gateUI.classList.add('active');
+  document.getElementById('scene-gate').classList.add('active');
 
-  // Camera dolly toward the gate
   gsap.to(camera.position, {
     z: 7.2,
     y: 0.2,
     duration: 3.4,
     ease: 'power2.inOut',
-    onStart: () => {
+    onStart: function() {
       gsap.to(fadeEl, { opacity: 0, duration: 1.6, ease: 'power2.inOut' });
-    },
+    }
   });
 
-  // Bind enter button (once)
-  const btn = document.getElementById('enter-btn');
-  btn.onclick = () => enterThroughPortal();
+  document.getElementById('enter-btn').onclick = function() { enterThroughPortal(); };
 }
 
 function enterThroughPortal() {
   if (STATE.scene === 'portal') return;
   STATE.scene = 'portal';
 
-  // Hide gate UI
   document.getElementById('scene-gate').classList.remove('active');
-
-  // Play whoosh
   playWhoosh();
 
-  const portalGroup = sceneGate.getObjectByName('portalGroup');
   const vortex = sceneGate.getObjectByName('portalVortex');
   const glow = sceneGate.getObjectByName('portalGlow');
   const leftDoor = sceneGate.getObjectByName('gateLeft');
   const rightDoor = sceneGate.getObjectByName('gateRight');
 
-  // Open doors
   if (leftDoor) gsap.to(leftDoor.position, { x: -6.5, duration: 1.6, ease: 'power3.inOut' });
   if (rightDoor) gsap.to(rightDoor.position, { x: 6.5, duration: 1.6, ease: 'power3.inOut' });
 
-  // Portal ignites
-  if (vortex) {
-    gsap.to(vortex.material, { opacity: 0.95, duration: 1.2, ease: 'power2.out' });
-  }
+  if (vortex) gsap.to(vortex.material, { opacity: 0.95, duration: 1.2, ease: 'power2.out' });
   if (glow) {
     gsap.to(glow.material, { opacity: 1.0, duration: 1.2, ease: 'power2.out' });
     gsap.to(glow.scale, { x: 22, y: 22, duration: 1.4, ease: 'power2.out' });
   }
 
-  // Camera dive through portal
-  gsap.to(camera.position, {
-    z: -1.2,
-    y: 0,
-    duration: 2.4,
-    ease: 'power3.in',
-    delay: 0.4,
-  });
-  gsap.to(camera.rotation, {
-    z: Math.PI * 0.6,
-    duration: 2.4,
-    ease: 'power3.in',
-    delay: 0.4,
-  });
+  gsap.to(camera.position, { z: -1.2, y: 0, duration: 2.4, ease: 'power3.in', delay: 0.4 });
+  gsap.to(camera.rotation, { z: Math.PI * 0.6, duration: 2.4, ease: 'power3.in', delay: 0.4 });
 
-  // Bloom punch
-  if (bloomPass) {
-    gsap.to(bloomPass, { strength: 3.2, duration: 1.4, ease: 'power2.in', delay: 0.4 });
-  }
+  if (bloomPass) gsap.to(bloomPass, { strength: 3.2, duration: 1.4, ease: 'power2.in', delay: 0.4 });
 
-  // White flash
   const flashEl = document.getElementById('flash');
   gsap.to(flashEl, {
     opacity: 1,
     duration: 0.55,
     ease: 'power2.in',
     delay: 2.3,
-    onComplete: () => {
-      // Switch to carpet scene
+    onComplete: function() {
       transitionToCarpet();
-      // Then fade flash out
       gsap.to(flashEl, { opacity: 0, duration: 1.4, ease: 'power2.out', delay: 0.15 });
       if (bloomPass) gsap.to(bloomPass, { strength: 1.1, duration: 1.4 });
-    },
+    }
   });
 }
 
-/* ---------- AUDIO ---------- */
 let whooshEl = null;
 function playWhoosh() {
   try {
@@ -1309,11 +922,10 @@ function playWhoosh() {
       whooshEl.volume = 0.7;
     }
     whooshEl.currentTime = 0;
-    whooshEl.play().catch(() => {});
-  } catch (e) { /* silent */ }
+    whooshEl.play().catch(function() {});
+  } catch (e) {}
 }
 
-/* ---------- RESIZE ---------- */
 function onResize() {
   const w = window.innerWidth;
   const h = window.innerHeight;
@@ -1324,25 +936,18 @@ function onResize() {
 }
 window.addEventListener('resize', onResize);
 
-/* ---------- BOOT ---------- */
 function boot() {
   initRenderer();
 
-  // Create all scenes up front (cheap enough)
   sceneLogo = createSceneLogo();
   sceneGate = createSceneGate();
-  sceneCarpet = typeof createSceneCarpet === 'function' ? createSceneCarpet() : new THREE.Scene();
-  sceneShip = typeof createSceneShip === 'function' ? createSceneShip() : new THREE.Scene();
-  sceneWarp = typeof createSceneWarp === 'function' ? createSceneWarp() : new THREE.Scene();
-  sceneStore = typeof createSceneStore === 'function' ? createSceneStore() : new THREE.Scene();
+  sceneCarpet = createSceneCarpet();
+  sceneShip = createSceneShip();
+  sceneWarp = createSceneWarp();
+  sceneStore = createSceneStore();
 
-  sceneRoot = sceneLogo;
   activeScene = sceneLogo;
-
-  // Start render loop
   animate();
-
-  // Loader progress simulation (assets are loaded lazily, so we just simulate)
   simulateLoader();
 }
 
@@ -1351,7 +956,7 @@ function simulateLoader() {
   const status = document.getElementById('load-status');
   const msgs = ['Initializing…', 'Calibrating gate…', 'Summoning particles…', 'Ready.'];
   let p = 0;
-  const iv = setInterval(() => {
+  const iv = setInterval(function() {
     p += Math.random() * 9 + 3;
     if (p >= 100) p = 100;
     bar.style.width = p + '%';
@@ -1360,34 +965,22 @@ function simulateLoader() {
     if (p >= 100) {
       clearInterval(iv);
       STATE.loaded = true;
-      setTimeout(() => { transitionToGate(); }, 400);
+      setTimeout(function() { transitionToGate(); }, 400);
     }
   }, 130);
-}
-
-/* Boot after DOM ready */
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', boot);
-} else {
-  boot();
 }/* ============================================================
    VAA STORE — PART 3
-   Scenes 2, 3, 4 + Supabase + final wiring
-   (Paste this AFTER Part 2, before </script>)
-   ============================================================ */
-
-/* ============================================================
-   SCENE 2 — RED CARPET
+   Scenes 2, 3, 4 + Supabase + final wiring + </script></body></html>
    ============================================================ */
 
 let ladySprite = null;
 let ladyFrame = 0;
 let ladyWalkInterval = null;
 let carpetSceneRef = null;
-let searchResolve = null;
 
 const LADY_WALK_FRAMES = [ASSETS.lady1, ASSETS.lady2, ASSETS.lady3];
 
+/* ---------- SCENE 2 — CARPET ---------- */
 function createSceneCarpet() {
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x0a0508, 0.028);
@@ -1400,61 +993,60 @@ function createSceneCarpet() {
   rim.position.set(-5, 3, -6);
   scene.add(rim);
 
-  // Starfield
   scene.add(makeStarfield(900, 90));
 
-  // Carpet — giant plane with carpet texture
   const carpetTex = new THREE.TextureLoader().load(ASSETS.carpet);
   carpetTex.encoding = THREE.sRGBEncoding;
   carpetTex.wrapS = carpetTex.wrapT = THREE.RepeatWrapping;
   carpetTex.repeat.set(2, 12);
 
-  const carpetGeo = new THREE.PlaneGeometry(14, 120, 1, 1);
-  const carpetMat = new THREE.MeshBasicMaterial({ map: carpetTex, color: 0xffffff });
-  const carpet = new THREE.Mesh(carpetGeo, carpetMat);
+  const carpet = new THREE.Mesh(
+    new THREE.PlaneGeometry(14, 120, 1, 1),
+    new THREE.MeshBasicMaterial({ map: carpetTex, color: 0xffffff })
+  );
   carpet.rotation.x = -Math.PI / 2;
   carpet.position.set(0, -2.2, -20);
   carpet.name = 'carpet';
   scene.add(carpet);
 
-  // Side rails (glow)
-  for (let side = -1; side <= 1; side += 2) {
-    const railGeo = new THREE.BoxGeometry(0.08, 0.08, 120);
-    const railMat = new THREE.MeshBasicMaterial({
-      color: side === -1 ? 0xd4af37 : 0xb06cff,
-      transparent: true,
-      opacity: 0.9,
-    });
-    const rail = new THREE.Mesh(railGeo, railMat);
+  [-1, 1].forEach(function(side) {
+    const rail = new THREE.Mesh(
+      new THREE.BoxGeometry(0.08, 0.08, 120),
+      new THREE.MeshBasicMaterial({
+        color: side === -1 ? 0xd4af37 : 0xb06cff,
+        transparent: true,
+        opacity: 0.9
+      })
+    );
     rail.position.set(side * 7.05, -2.1, -20);
     rail.name = 'rail' + side;
     scene.add(rail);
-  }
+  });
 
-  // SVG Holographic Shops in the background (3D planes with canvas textures)
   buildHoloShops(scene);
 
-  // Floating characters (sprites)
   const charConfigs = [
     { tex: ASSETS.doctor,   pos: [-5.2, 0.6, -10], scale: [2.2, 3.2] },
     { tex: ASSETS.police,   pos: [ 5.4, 0.4, -12], scale: [2.2, 3.2] },
     { tex: ASSETS.business, pos: [-6.8, 0.2, -16], scale: [2.4, 3.4] },
     { tex: ASSETS.shopper1, pos: [ 6.6, 0.3, -18], scale: [2.2, 3.2] },
-    { tex: ASSETS.shopper2, pos: [-4.5, 0.5, -22], scale: [2.2, 3.2] },
+    { tex: ASSETS.shopper2, pos: [-4.5, 0.5, -22], scale: [2.2, 3.2] }
   ];
-  charConfigs.forEach((cfg, i) => {
+
+  charConfigs.forEach(function(cfg, i) {
     const mat = new THREE.SpriteMaterial({
       transparent: true,
       opacity: 0,
-      blending: THREE.NormalBlending,
+      blending: THREE.NormalBlending
     });
     const sprite = new THREE.Sprite(mat);
     sprite.position.set(cfg.pos[0], cfg.pos[1], cfg.pos[2]);
     sprite.scale.set(cfg.scale[0], cfg.scale[1], 1);
+    sprite.userData.baseY = cfg.pos[1];
     sprite.name = 'char' + i;
     scene.add(sprite);
 
-    new THREE.TextureLoader().load(cfg.tex, (t) => {
+    new THREE.TextureLoader().load(cfg.tex, function(t) {
       t.encoding = THREE.sRGBEncoding;
       mat.map = t;
       mat.needsUpdate = true;
@@ -1462,11 +1054,10 @@ function createSceneCarpet() {
     });
   });
 
-  // Lady — sprite that we walk down the carpet
   const ladyMat = new THREE.SpriteMaterial({
     transparent: true,
     opacity: 0,
-    blending: THREE.NormalBlending,
+    blending: THREE.NormalBlending
   });
   ladySprite = new THREE.Sprite(ladyMat);
   ladySprite.position.set(0, -0.5, -26);
@@ -1474,8 +1065,7 @@ function createSceneCarpet() {
   ladySprite.name = 'lady';
   scene.add(ladySprite);
 
-  // Load first frame
-  new THREE.TextureLoader().load(LADY_WALK_FRAMES[0], (t) => {
+  new THREE.TextureLoader().load(LADY_WALK_FRAMES[0], function(t) {
     t.encoding = THREE.sRGBEncoding;
     ladyMat.map = t;
     ladyMat.needsUpdate = true;
@@ -1487,26 +1077,25 @@ function createSceneCarpet() {
 }
 
 function buildHoloShops(scene) {
-  const shopLabels = [
+  const shops = [
     { text: 'ATTIRE',  color: '#d4af37', x: -9,  z: -30 },
     { text: 'TECH',    color: '#9fe0ff', x:  9,  z: -34 },
     { text: 'BEAUTY',  color: '#b06cff', x: -11, z: -42 },
-    { text: 'HOME',    color: '#7dffb0', x:  11, z: -46 },
+    { text: 'HOME',    color: '#7dffb0', x:  11, z: -46 }
   ];
 
-  shopLabels.forEach((shop, i) => {
+  shops.forEach(function(shop, i) {
     const c = document.createElement('canvas');
-    c.width = 512; c.height = 512;
+    c.width = 512;
+    c.height = 512;
     const ctx = c.getContext('2d');
 
-    // Frame
     ctx.strokeStyle = shop.color;
     ctx.lineWidth = 6;
     ctx.shadowColor = shop.color;
     ctx.shadowBlur = 30;
     ctx.strokeRect(30, 30, 452, 452);
 
-    // Inner holographic grid
     ctx.strokeStyle = shop.color + '55';
     ctx.lineWidth = 1;
     for (let g = 0; g < 512; g += 32) {
@@ -1514,7 +1103,6 @@ function buildHoloShops(scene) {
       ctx.beginPath(); ctx.moveTo(30, g); ctx.lineTo(482, g); ctx.stroke();
     }
 
-    // Text
     ctx.font = 'bold 64px Orbitron, sans-serif';
     ctx.fillStyle = shop.color;
     ctx.textAlign = 'center';
@@ -1531,10 +1119,10 @@ function buildHoloShops(scene) {
       opacity: 0,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      side: THREE.DoubleSide,
+      side: THREE.DoubleSide
     });
-    const geo = new THREE.PlaneGeometry(7, 7);
-    const mesh = new THREE.Mesh(geo, mat);
+
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), mat);
     mesh.position.set(shop.x, 1.5, shop.z);
     mesh.name = 'holoShop' + i;
     scene.add(mesh);
@@ -1546,19 +1134,16 @@ function buildHoloShops(scene) {
 function animateCarpet(t, dt) {
   if (!carpetSceneRef) return;
 
-  // Slow drift of the carpet texture
   const carpet = carpetSceneRef.getObjectByName('carpet');
   if (carpet && carpet.material.map) {
     carpet.material.map.offset.y = (t * 0.02) % 1;
   }
 
-  // Rails pulse
-  [-1, 1].forEach(side => {
+  [-1, 1].forEach(function(side) {
     const rail = carpetSceneRef.getObjectByName('rail' + side);
     if (rail) rail.material.opacity = 0.7 + Math.sin(t * 2 + side) * 0.25;
   });
 
-  // Holo shop shimmer
   for (let i = 0; i < 4; i++) {
     const h = carpetSceneRef.getObjectByName('holoShop' + i);
     if (h) {
@@ -1567,10 +1152,9 @@ function animateCarpet(t, dt) {
     }
   }
 
-  // Float characters
   for (let i = 0; i < 5; i++) {
     const ch = carpetSceneRef.getObjectByName('char' + i);
-    if (ch) ch.position.y = (ch.userData.baseY || ch.position.y) + Math.sin(t * 0.6 + i) * 0.08;
+    if (ch) ch.position.y = ch.userData.baseY + Math.sin(t * 0.6 + i) * 0.08;
   }
 }
 
@@ -1578,59 +1162,50 @@ function transitionToCarpet() {
   STATE.scene = 'carpet';
   activeScene = sceneCarpet;
   resetCamera();
-
-  // Camera starts far back looking down the carpet
   camera.position.set(0, 1.4, 6);
   camera.lookAt(0, -0.5, -20);
 
-  // Show carpet UI layer
-  const carpetUI = document.getElementById('scene-carpet');
-  carpetUI.classList.add('active');
+  document.getElementById('scene-carpet').classList.add('active');
 
-  // Camera push down the carpet
   gsap.to(camera.position, {
     z: -8,
     y: 0.4,
     duration: 4.0,
     ease: 'power2.inOut',
-    onUpdate: () => camera.lookAt(0, -0.5, camera.position.z - 20),
+    onUpdate: function() { camera.lookAt(0, -0.5, camera.position.z - 20); }
   });
 
-  // Start the lady walk after 1.2s
-  setTimeout(() => {
-    startLadyWalk();
-  }, 1200);
+  setTimeout(function() { startLadyWalk(); }, 1200);
 }
 
 function startLadyWalk() {
   if (!ladySprite) return;
 
-  ladyWalkInterval = setInterval(() => {
+  ladyWalkInterval = setInterval(function() {
     ladyFrame = (ladyFrame + 1) % 3;
-    new THREE.TextureLoader().load(LADY_WALK_FRAMES[ladyFrame], (t) => {
+    new THREE.TextureLoader().load(LADY_WALK_FRAMES[ladyFrame], function(t) {
       t.encoding = THREE.sRGBEncoding;
       ladySprite.material.map = t;
       ladySprite.material.needsUpdate = true;
     });
   }, 220);
 
-  // Move her down the carpet toward the camera
   gsap.to(ladySprite.position, {
     z: -14,
     duration: 4.5,
     ease: 'power2.inOut',
-    onComplete: () => {
+    onComplete: function() {
       clearInterval(ladyWalkInterval);
       ladyWalkInterval = null;
       setLadyPose(ASSETS.ladySmile);
-      setTimeout(() => showLadySpeechOne(), 400);
-    },
+      setTimeout(function() { showLadySpeechOne(); }, 400);
+    }
   });
 }
 
 function setLadyPose(texturePath) {
   if (!ladySprite) return;
-  new THREE.TextureLoader().load(texturePath, (t) => {
+  new THREE.TextureLoader().load(texturePath, function(t) {
     t.encoding = THREE.sRGBEncoding;
     ladySprite.material.map = t;
     ladySprite.material.needsUpdate = true;
@@ -1643,10 +1218,7 @@ function showLadySpeechOne() {
   bubble.textContent = line;
   bubble.classList.add('show');
   speak(line);
-
-  setTimeout(() => {
-    showLadySpeechTwo();
-  }, 5000);
+  setTimeout(function() { showLadySpeechTwo(); }, 5000);
 }
 
 function showLadySpeechTwo() {
@@ -1656,10 +1228,9 @@ function showLadySpeechTwo() {
   bubble.classList.add('show');
   speak(line);
 
-  setTimeout(() => {
+  setTimeout(function() {
     bubble.classList.remove('show');
-    const searchUI = document.getElementById('search-ui');
-    searchUI.classList.add('show');
+    document.getElementById('search-ui').classList.add('show');
     document.getElementById('search-input').focus();
   }, 2600);
 }
@@ -1672,18 +1243,16 @@ function speak(text) {
     u.rate = 0.95;
     u.pitch = 1.15;
     u.volume = 0.9;
-    // Prefer a female voice
     const voices = window.speechSynthesis.getVoices();
-    const female = voices.find(v => /female|samantha|zira|victoria|karen|moira|tessa/i.test(v.name));
+    const female = voices.find(function(v) {
+      return /female|samantha|zira|victoria|karen|moira|tessa/i.test(v.name);
+    });
     if (female) u.voice = female;
     window.speechSynthesis.speak(u);
-  } catch (e) { /* silent */ }
+  } catch (e) {}
 }
 
-/* ============================================================
-   SCENE 3 — SHIP + WARP
-   ============================================================ */
-
+/* ---------- SCENE 3 — SHIP + WARP ---------- */
 let shipSceneRef = null;
 let warpSceneRef = null;
 let warpParticles = null;
@@ -1698,7 +1267,6 @@ function createSceneShip() {
   key.position.set(4, 4, 5);
   scene.add(key);
 
-  // Nebula backdrop
   const nebulaTex = new THREE.TextureLoader().load(ASSETS.nebula);
   nebulaTex.encoding = THREE.sRGBEncoding;
   const bg = new THREE.Mesh(
@@ -1709,14 +1277,12 @@ function createSceneShip() {
   bg.name = 'nebulaBg';
   scene.add(bg);
 
-  // Starfield
   scene.add(makeStarfield(1200, 100));
 
-  // Spaceship sprite
   const shipMat = new THREE.SpriteMaterial({
     transparent: true,
     opacity: 0,
-    blending: THREE.NormalBlending,
+    blending: THREE.NormalBlending
   });
   const ship = new THREE.Sprite(shipMat);
   ship.position.set(0, 0, -18);
@@ -1724,7 +1290,7 @@ function createSceneShip() {
   ship.name = 'ship';
   scene.add(ship);
 
-  new THREE.TextureLoader().load(ASSETS.ship, (t) => {
+  new THREE.TextureLoader().load(ASSETS.ship, function(t) {
     t.encoding = THREE.sRGBEncoding;
     shipMat.map = t;
     shipMat.needsUpdate = true;
@@ -1749,38 +1315,29 @@ function transitionToShipAndWarp(query) {
   STATE.scene = 'ship';
   STATE.searchQuery = query;
 
-  // Hide search UI
   document.getElementById('search-ui').classList.remove('show');
   document.getElementById('speech-bubble').classList.remove('show');
 
-  // Lady turns and says goodbye line
   setLadyPose(ASSETS.girlTurn);
   const bubble = document.getElementById('speech-bubble');
   bubble.textContent = "Okay, let's take a ride.";
   bubble.classList.add('show');
   speak("Okay, let's take a ride.");
 
-  // Fade to black
   const fadeEl = document.getElementById('fade');
   gsap.to(fadeEl, {
     opacity: 1,
     duration: 1.0,
     ease: 'power2.in',
     delay: 0.6,
-    onComplete: () => {
-      // Swap to ship scene
+    onComplete: function() {
       activeScene = sceneShip;
       resetCamera();
       camera.position.set(0, 0, 8);
       document.getElementById('scene-carpet').classList.remove('active');
-
       gsap.to(fadeEl, { opacity: 0, duration: 0.9, ease: 'power2.out' });
-
-      // Ship flies in
-      setTimeout(() => {
-        animateShipIn();
-      }, 500);
-    },
+      setTimeout(function() { animateShipIn(); }, 500);
+    }
   });
 }
 
@@ -1796,31 +1353,24 @@ function animateShipIn() {
     z: -6,
     duration: 2.6,
     ease: 'power2.inOut',
-    onComplete: () => {
-      // Zoom into ship
+    onComplete: function() {
       gsap.to(camera.position, {
         z: -3.8,
         y: 0.1,
         duration: 1.6,
         ease: 'power3.in',
-        onComplete: () => {
-          // Swap to warp
-          switchToWarp();
-        },
+        onComplete: function() { switchToWarp(); }
       });
       gsap.to(ship.scale, { x: 14, y: 14, duration: 1.6, ease: 'power3.in' });
-    },
+    }
   });
 }
 
-/* ---------- WARP ---------- */
 function createSceneWarp() {
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x020208, 0.02);
-
   scene.add(new THREE.AmbientLight(0x8899ff, 0.6));
 
-  // Cockpit window backdrop
   const winTex = new THREE.TextureLoader().load(ASSETS.window);
   winTex.encoding = THREE.sRGBEncoding;
   const win = new THREE.Mesh(
@@ -1831,7 +1381,6 @@ function createSceneWarp() {
   win.name = 'cockpitWin';
   scene.add(win);
 
-  // Warp particles: streak points moving toward camera
   const count = 2400;
   const geo = new THREE.BufferGeometry();
   const pos = new Float32Array(count * 3);
@@ -1846,7 +1395,9 @@ function createSceneWarp() {
     pos[i * 3 + 2] = -Math.random() * 120;
     const r = Math.random();
     const c = r < 0.5 ? cA : (r < 0.8 ? cC : cB);
-    col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+    col[i * 3] = c.r;
+    col[i * 3 + 1] = c.g;
+    col[i * 3 + 2] = c.b;
   }
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
@@ -1859,7 +1410,7 @@ function createSceneWarp() {
     opacity: 0.95,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
-    sizeAttenuation: true,
+    sizeAttenuation: true
   });
 
   warpParticles = new THREE.Points(geo, mat);
@@ -1885,12 +1436,9 @@ function animateWarp(t, dt) {
   }
   warpParticles.geometry.attributes.position.needsUpdate = true;
 
-  // FOV punch
   const targetFov = 78;
   camera.fov += (targetFov - camera.fov) * dt * 1.5;
   camera.updateProjectionMatrix();
-
-  // Rotate subtle
   warpParticles.rotation.z = Math.sin(t * 0.3) * 0.05;
 }
 
@@ -1901,21 +1449,13 @@ function switchToWarp() {
   camera.position.set(0, 0, 3);
   warpSpeed = 0;
 
-  const overlay = document.getElementById('scene-warp-overlay');
-  overlay.classList.add('active');
-
+  document.getElementById('scene-warp-overlay').classList.add('active');
   if (bloomPass) gsap.to(bloomPass, { strength: 2.0, duration: 0.8 });
 
-  // Warp for 3.5s then land
-  setTimeout(() => {
-    landOnIcePlanet();
-  }, 3500);
+  setTimeout(function() { landOnIcePlanet(); }, 3500);
 }
 
-/* ============================================================
-   SCENE 4 — ICE STORE
-   ============================================================ */
-
+/* ---------- SCENE 4 — ICE STORE ---------- */
 let storeSceneRef = null;
 
 function createSceneStore() {
@@ -1930,14 +1470,12 @@ function createSceneStore() {
   rim.position.set(-8, 4, -10);
   scene.add(rim);
 
-  // Ice planet floor
   const iceTex = new THREE.TextureLoader().load(ASSETS.ice);
   iceTex.encoding = THREE.sRGBEncoding;
   iceTex.wrapS = iceTex.wrapT = THREE.RepeatWrapping;
   iceTex.repeat.set(3, 3);
 
   const iceGeo = new THREE.PlaneGeometry(80, 80, 40, 40);
-  // Ice jagged displacement
   const icePos = iceGeo.attributes.position;
   for (let i = 0; i < icePos.count; i++) {
     const x = icePos.getX(i);
@@ -1952,15 +1490,15 @@ function createSceneStore() {
     color: 0xaad4ff,
     roughness: 0.6,
     metalness: 0.3,
-    flatShading: true,
+    flatShading: true
   });
+
   const ice = new THREE.Mesh(iceGeo, iceMat);
   ice.rotation.x = -Math.PI / 2;
   ice.position.y = -3.2;
   ice.name = 'iceFloor';
   scene.add(ice);
 
-  // Distant ice mountains (cones)
   for (let i = 0; i < 14; i++) {
     const h = 4 + Math.random() * 8;
     const coneGeo = new THREE.ConeGeometry(1.2 + Math.random() * 2, h, 5);
@@ -1970,7 +1508,7 @@ function createSceneStore() {
       metalness: 0.2,
       flatShading: true,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.85
     });
     const cone = new THREE.Mesh(coneGeo, coneMat);
     const angle = (i / 14) * Math.PI * 2;
@@ -1981,24 +1519,22 @@ function createSceneStore() {
     scene.add(cone);
   }
 
-  // Starfield
   scene.add(makeStarfield(1000, 110));
 
-  // Floating glow orbs (using orb images as sprite glows)
-  ['orb1', 'orb2', 'orb3', 'orb4'].forEach((key, i) => {
+  ['orb1', 'orb2', 'orb3', 'orb4'].forEach(function(key, i) {
     const path = 'assets/' + key + '.jpeg';
     const glowMat = new THREE.SpriteMaterial({
       transparent: true,
       opacity: 0.6,
       blending: THREE.AdditiveBlending,
-      depthWrite: false,
+      depthWrite: false
     });
     const sprite = new THREE.Sprite(glowMat);
     sprite.scale.set(6, 6, 1);
     const angle = (i / 4) * Math.PI * 2;
     sprite.position.set(Math.cos(angle) * 14, 2 + Math.random() * 3, Math.sin(angle) * 14 - 6);
     sprite.name = 'orb' + i;
-    new THREE.TextureLoader().load(path, (t) => {
+    new THREE.TextureLoader().load(path, function(t) {
       t.encoding = THREE.sRGBEncoding;
       glowMat.map = t;
       glowMat.needsUpdate = true;
@@ -2012,7 +1548,7 @@ function createSceneStore() {
 
 function animateStore(t, dt) {
   if (!storeSceneRef) return;
-  ['orb0', 'orb1', 'orb2', 'orb3'].forEach((name, i) => {
+  ['orb0', 'orb1', 'orb2', 'orb3'].forEach(function(name, i) {
     const orb = storeSceneRef.getObjectByName(name);
     if (orb) {
       orb.position.y = 2.5 + Math.sin(t * 0.6 + i * 1.4) * 0.6;
@@ -2027,57 +1563,43 @@ function animateStore(t, dt) {
 
 function landOnIcePlanet() {
   STATE.scene = 'store';
-
   const fadeEl = document.getElementById('fade');
+
   gsap.to(fadeEl, {
     opacity: 1,
     duration: 0.7,
     ease: 'power2.in',
-    onComplete: () => {
+    onComplete: function() {
       activeScene = sceneStore;
       resetCamera();
       camera.position.set(0, 2.5, 8);
       camera.lookAt(0, 0, -6);
 
-      // Hide warp overlay
       document.getElementById('scene-warp-overlay').classList.remove('active');
       if (bloomPass) gsap.to(bloomPass, { strength: 0.9, duration: 1.2 });
 
-      // Fade back in
       gsap.to(fadeEl, { opacity: 0, duration: 1.4, ease: 'power2.out' });
 
-      // Camera swoop
       gsap.to(camera.position, {
         z: 3,
         y: 1.2,
         duration: 3.0,
-        ease: 'power2.inOut',
+        ease: 'power2.inOut'
       });
 
-      // Show store HTML layer
-      const storeUI = document.getElementById('scene-store');
-      storeUI.classList.add('active');
-
-      // Fetch products
+      document.getElementById('scene-store').classList.add('active');
       fetchProducts();
-    },
+    }
   });
 }
 
-/* ============================================================
-   SUPABASE INTEGRATION
-   ============================================================ */
-
+/* ---------- SUPABASE ---------- */
 let supabaseClient = null;
 
 function initSupabase() {
-  if (typeof window.supabase === 'undefined') {
-    console.warn('Supabase library not loaded.');
-    return null;
-  }
+  if (typeof window.supabase === 'undefined') return null;
   if (!supabaseClient) {
-    const createClient = window.supabase.createClient || window.supabase.createClient;
-    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
   return supabaseClient;
 }
@@ -2087,6 +1609,7 @@ async function fetchProducts() {
   const gridEl = document.getElementById('product-grid');
 
   loadingEl.classList.remove('hidden');
+  loadingEl.textContent = 'Loading products…';
   gridEl.innerHTML = '';
 
   const client = initSupabase();
@@ -2103,17 +1626,15 @@ async function fetchProducts() {
       .order('created_at', { ascending: false })
       .limit(24);
 
-    // If user typed a search, filter by name/description ILIKE
     if (STATE.searchQuery && STATE.searchQuery.trim()) {
       const q = STATE.searchQuery.trim();
-      query = query.or(`name.ilike.%${q}%,description.ilike.%${q}%`);
+      query = query.or('name.ilike.%' + q + '%,description.ilike.%' + q + '%');
     }
 
-    const { data, error } = await query;
+    const result = await query;
+    if (result.error) throw result.error;
 
-    if (error) throw error;
-
-    STATE.products = data || [];
+    STATE.products = result.data || [];
     loadingEl.classList.add('hidden');
 
     if (STATE.products.length === 0) {
@@ -2134,40 +1655,33 @@ function renderProducts(products) {
   const grid = document.getElementById('product-grid');
   grid.innerHTML = '';
 
-  products.forEach((p, i) => {
+  products.forEach(function(p, i) {
     const card = document.createElement('div');
     card.className = 'product-card';
     card.style.animationDelay = (i * 0.06) + 's';
 
-    const imgUrl = (p.images && p.images.length > 0)
-      ? p.images[0]
-      : 'assets/cloudy.jpeg';
-
+    const imgUrl = (p.images && p.images.length > 0) ? p.images[0] : 'assets/cloudy.jpeg';
     const sizes = Array.isArray(p.sizes) && p.sizes.length > 0
-      ? p.sizes.map(s => `<span>${escapeHtml(String(s))}</span>`).join('')
+      ? p.sizes.map(function(s) { return '<span>' + escapeHtml(String(s)) + '</span>'; }).join('')
       : '';
-
     const price = (typeof p.price === 'number')
       ? p.price.toFixed(2)
       : Number(p.price || 0).toFixed(2);
 
-    card.innerHTML = `
-      <div class="card-img-wrap">
-        <img src="${escapeHtml(imgUrl)}" alt="${escapeHtml(p.name || '')}" loading="lazy"
-             onerror="this.onerror=null;this.src='assets/cloudy.jpeg';" />
-      </div>
-      <div class="card-body">
-        <div class="card-name">${escapeHtml(p.name || 'Untitled')}</div>
-        <div class="card-desc">${escapeHtml(p.description || '')}</div>
-        <div class="card-foot">
-          <div class="card-price">${price}</div>
-          <div class="card-sizes">${sizes}</div>
-        </div>
-      </div>
-    `;
+    card.innerHTML =
+      '<div class="card-img-wrap">' +
+        '<img src="' + escapeHtml(imgUrl) + '" alt="' + escapeHtml(p.name || '') + '" loading="lazy" onerror="this.onerror=null;this.src=\'assets/cloudy.jpeg\';" />' +
+      '</div>' +
+      '<div class="card-body">' +
+        '<div class="card-name">' + escapeHtml(p.name || 'Untitled') + '</div>' +
+        '<div class="card-desc">' + escapeHtml(p.description || '') + '</div>' +
+        '<div class="card-foot">' +
+          '<div class="card-price">' + price + '</div>' +
+          '<div class="card-sizes">' + sizes + '</div>' +
+        '</div>' +
+      '</div>';
 
-    card.addEventListener('click', () => {
-      // Simple selection feedback (extend later for detail page)
+    card.addEventListener('click', function() {
       gsap.fromTo(card, { scale: 0.98 }, { scale: 1, duration: 0.3, ease: 'back.out(2)' });
     });
 
@@ -2184,52 +1698,41 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-/* ============================================================
-   SEARCH UI WIRING
-   ============================================================ */
-
+/* ---------- SEARCH UI ---------- */
 function wireSearchUI() {
   const input = document.getElementById('search-input');
   const goBtn = document.getElementById('search-go');
 
-  const submit = () => {
+  function submit() {
     const q = input.value.trim();
     if (!q) return;
     transitionToShipAndWarp(q);
-  };
+  }
 
   goBtn.addEventListener('click', submit);
-  input.addEventListener('keydown', (e) => {
+  input.addEventListener('keydown', function(e) {
     if (e.key === 'Enter') submit();
   });
 }
 
-/* ============================================================
-   FINAL WIRING — run once DOM is ready
-   ============================================================ */
+/* ---------- FINAL BOOT ---------- */
+function finalize() {
+  wireSearchUI();
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.onvoiceschanged = function() {
+      window.speechSynthesis.getVoices();
+    };
+    window.speechSynthesis.getVoices();
+  }
+  boot();
+  console.log('%cVAA STORE — all systems ready.', 'color:#d4af37;font-family:Orbitron;font-size:12px;');
+}
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', finalize);
 } else {
   finalize();
 }
-
-function finalize() {
-  wireSearchUI();
-
-  // Preload voice list for speechSynthesis
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.onvoiceschanged = () => {
-      window.speechSynthesis.getVoices();
-    };
-    window.speechSynthesis.getVoices();
-  }
-
-  // Make sure the loader → gate transition works even if boot() already ran.
-  // (boot() runs from Part 2; it calls transitionToGate when the fake bar finishes.)
-  console.log('%cVAA STORE — all systems ready.', 'color:#d4af37;font-family:Orbitron;font-size:12px;');
-}
-  </script>
-
+</script>
 </body>
 </html>
